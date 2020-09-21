@@ -1,0 +1,2 @@
+rootProject.name='GC_LAST'
+include ':app'

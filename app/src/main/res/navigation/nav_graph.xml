@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/splashFragment">
+
+    <fragment
+        android:id="@+id/resultFragment"
+        android:name="com.example.gc_last.result.ResultFragment"
+        android:label="검색 결과" >
+        <argument
+            android:name="SELECT_SUBWAY"
+            app:argType="string" />
+        <argument
+            android:name="RESULT_DIRECTION"
+            app:argType="string" />
+        <argument
+            android:name="SELECT_DAY"
+            app:argType="string" />
+    </fragment>
+    <fragment
+        android:id="@+id/saveFragment"
+        android:name="com.example.gc_last.local.SaveFragment"
+        android:label="역 정보" >
+        <argument
+            android:name="SAVE_ID"
+            app:argType="long" />
+        <action
+            android:id="@+id/action_saveFragment_to_savedTimeTableFragment"
+            app:destination="@id/savedTimeTableFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/searchFragment"
+        android:name="com.example.gc_last.search.SearchFragment"
+        android:label="@string/app_name">
+        <action
+            android:id="@+id/action_searchFragment_to_resultFragment"
+            app:destination="@id/resultFragment" />
+        <action
+            android:id="@+id/action_searchFragment_to_saveFragment"
+            app:destination="@id/saveFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/savedTimeTableFragment"
+        android:name="com.example.gc_last.local.SavedTimeTableFragment"
+        android:label="시간표"
+        tools:layout="@layout/fragment_saved_time_table" >
+        <argument
+            android:name="RESULT_DIRECTION"
+            app:argType="string" />
+        <argument
+            android:name="SELECT_DAY"
+            app:argType="string" />
+        <argument
+            android:name="SELECT_SUBWAY"
+            app:argType="string" />
+    </fragment>
+    <fragment
+        android:id="@+id/splashFragment"
+        android:name="com.example.gc_last.main.SplashFragment"
+        tools:layout="@layout/fragment_splash" >
+        <action
+            android:id="@+id/action_global_searchFragment"
+            app:destination="@id/searchFragment"
+            app:popUpTo="@id/searchFragment"
+            app:popUpToInclusive="true"
+            app:launchSingleTop="true" />
+    </fragment>
+</navigation>
