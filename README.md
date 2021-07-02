@@ -13,5 +13,5 @@
 
 ## 기능
 
-발표 문서 링크<br/>
-[https://github.com/DongJooKim1541/AndroidProjects_-Graduation_project/blob/main/B03_%EC%BD%94%EB%94%A9%EC%A4%91%EB%8F%85.pptx]
+프로젝트 제안서 및 발표 문서 링크<br/>
+[https://github.com/DongJooKim1541/AndroidProjects_realtimeSubway/commit/a00efdf001af478531174589b2bf338afc01259e]
