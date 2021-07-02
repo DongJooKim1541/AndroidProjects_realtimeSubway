@@ -12,6 +12,8 @@
 
 
 ## 기능
+시연 영상<br/>
+[https://github.com/DongJooKim1541/AndroidProjects_realtimeSubway/commit/752253bfc2c8f357dbaa90b6bd369d0b88a55f78]
 
 프로젝트 제안서 및 발표 문서 링크<br/>
 [https://github.com/DongJooKim1541/AndroidProjects_realtimeSubway/commit/a00efdf001af478531174589b2bf338afc01259e]
