@@ -6,10 +6,11 @@
 자주 이용하는 역을 등록하여 역에 대한 실시간 도착 정보와 시간	표, 근처 버스 정류장, 출구 정보 등을 빠르게 이용할 수 있는 어플리케이션
 
 ## 활용 기술
-- Kotlin
-- MVVM 패턴
-- Room Database
-
+```
+Kotlin
+MVVM pattern
+Room Database
+```
 
 ## 기능
 시연 영상<br/>
