@@ -52,22 +52,3 @@ android studio ./AndroidProjects_realtimeSubway
 # 앱 빌드 및 실행
 ./gradlew assembleDebug
 ```
-
-## 📊 프로젝트 통계
-
-- 총 코드 라인: ~3,500 LOC
-- Fragment: 5개
-- ViewModel: 3개
-- 테스트 케이스: 37개 (100% 성공)
-- 호환성: Android 8.0 ~ 10.0
-
-## ✅ 테스트 결과
-
-- 기능 테스트: 37/37 성공 (100%)
-- 성능 테스트: 전체 통과
-- 호환성 테스트: API 26~29 지원
-- 보안 테스트: 통과
-
-## 📄 라이선스
-
-본 프로젝트는 교육 목적의 프로젝트입니다.
