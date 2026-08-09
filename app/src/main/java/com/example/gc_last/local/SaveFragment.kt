@@ -97,11 +97,12 @@ class SaveFragment : Fragment() {
         startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
     }
 
+    // '역'은 코틀린 식별자에 쓸 수 있는 문자라 반드시 중괄호로 감싸야 한다.
     private fun busSearchUrl(stationName: String) =
-        "$NAVER_MAP_BASE/bus/search.nhn?query=$stationName역+버스&tab=BUS_ROUTE&busType=&queryRank=1"
+        "$NAVER_MAP_BASE/bus/search.nhn?query=${stationName}역+버스&tab=BUS_ROUTE&busType=&queryRank=1"
 
     private fun exitSearchUrl(stationName: String) =
-        "$NAVER_MAP_BASE/search2/search.nhn?query=$stationName역%20출구&sm=shistory&style=v5"
+        "$NAVER_MAP_BASE/search2/search.nhn?query=${stationName}역%20출구&sm=shistory&style=v5"
 
     companion object {
         private const val NAVER_MAP_BASE = "https://m.map.naver.com"

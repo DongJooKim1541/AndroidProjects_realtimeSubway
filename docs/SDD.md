@@ -11,8 +11,9 @@
 
 | 항목 | 값 |
 |------|-----|
-| 언어 | Kotlin 1.3.71 |
-| minSdk / targetSdk / compileSdk | 26 / 29 / 29 |
+| 언어 | Kotlin 1.7.20 |
+| minSdk / targetSdk / compileSdk | 26 / 29 / 33 |
+| 빌드 | AGP 7.4.2 / Gradle 7.6.4 / JDK 17 |
 | 아키텍처 | MVVM (ViewModel + LiveData) |
 | 화면 구성 | 단일 Activity + 5개 Fragment (Navigation Component) |
 | 지원 노선 | 2호선 20개 역 |
@@ -200,4 +201,4 @@ FAB를 누르면 조회 조건과 결과가 Room에 저장된다.
 | 통신 | API가 HTTPS를 제공하지 않아 평문 HTTP + `usesCleartextTraffic` 사용 |
 | Paging | Paging 2 (`PagedListAdapter`) 사용, Paging 3 미적용 |
 | View 접근 | `kotlin-android-extensions` synthetic 사용, ViewBinding 미적용 |
-| SDK | compileSdk/targetSdk 29로 현재 Play Store 배포 기준 미만 |
+| SDK | targetSdk 29 — 동작 변화를 피하려고 유지했으며, 현재 Play Store 배포 기준에는 미달 |

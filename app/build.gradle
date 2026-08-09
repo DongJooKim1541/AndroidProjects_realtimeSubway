@@ -15,12 +15,13 @@ def seoulOpenApiKey = localProperties.getProperty('SEOUL_OPENAPI_KEY')
         ?: ''
 
 android {
-    compileSdkVersion 29
-    buildToolsVersion "29.0.3"
+    namespace 'com.example.gc_last'
+    compileSdk 33
 
     defaultConfig {
         applicationId "com.example.gc_last"
         minSdkVersion 26
+        // 동작이 바뀌지 않도록 targetSdk 는 원래 값을 유지한다.
         targetSdkVersion 29
         versionCode 1
         versionName "1.0"
@@ -59,14 +60,14 @@ dependencies {
     implementation 'androidx.navigation:navigation-ui-ktx:2.2.2'
 
     // Room. suspend DAO 함수를 쓰기 위해 room-ktx 가 필요하다.
-    implementation 'androidx.room:room-runtime:2.2.5'
-    implementation 'androidx.room:room-ktx:2.2.5'
-    kapt 'androidx.room:room-compiler:2.2.5'
+    implementation 'androidx.room:room-runtime:2.5.2'
+    implementation 'androidx.room:room-ktx:2.5.2'
+    kapt 'androidx.room:room-compiler:2.5.2'
 
     // viewModelScope / LiveData observe 확장 함수
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.2.0'
-    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.2.0'
-    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.2.0'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.5.1'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.1'
+    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.5.1'
 
     implementation 'androidx.paging:paging-runtime:2.1.2'
 

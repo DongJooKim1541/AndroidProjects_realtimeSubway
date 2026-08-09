@@ -2,6 +2,7 @@ package com.example.gc_last.model
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
 @Entity(
@@ -13,7 +14,9 @@ import androidx.room.PrimaryKey
             parentColumns = arrayOf("id"),
             childColumns = arrayOf("saveId")
         )
-    )
+    ),
+    // 외래키 컬럼에 인덱스가 없으면 부모 테이블 변경 때마다 전체 스캔이 발생한다.
+    indices = arrayOf(Index("saveId"))
 )
 
 data class FreshData(

@@ -1,22 +1,51 @@
-# Android Studio / IntelliJ
-*.iml
-.idea/
-.DS_Store
+# ── 비밀 정보 (절대 커밋 금지) ─────────────────────────────
+# 서명 키
+*.jks
+*.keystore
+keystore.properties
+signing.properties
+# SDK 경로와 SEOUL_OPENAPI_KEY 가 들어간다
+local.properties
+# 자격 증명
+*.pem
+*.p12
+*.p8
+secrets.properties
 
-# Gradle
-.gradle/
-/build
+# ── 빌드 산출물 ────────────────────────────────────────────
+build/
 /captures
 .externalNativeBuild
 .cxx
-
-# 로컬 설정 (SDK 경로, API 키)
-/local.properties
-
-# 빌드 산출물
+gen/
+out/
+release/
 *.apk
 *.aab
-app/release/
+*.ap_
+*.dex
+*.class
+*.hprof
+lint-results*.html
+lint-results*.xml
 
-# Claude Code
+# ── Gradle ────────────────────────────────────────────────
+# 래퍼(gradle/wrapper)는 추적한다. 없으면 ./gradlew 가 동작하지 않는다.
+.gradle/
+.kotlin/
+
+# ── IDE ───────────────────────────────────────────────────
+*.iml
+.idea/
+.navigation/
+freeline/
+fabric.properties
+
+# ── OS / 동기화 ────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── 기타 ──────────────────────────────────────────────────
+*.log
 .claude/

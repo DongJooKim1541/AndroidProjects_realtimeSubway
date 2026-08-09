@@ -23,13 +23,14 @@
 
 | 영역 | 사용 기술 |
 |------|-----------|
-| 언어 | Kotlin 1.3.71 |
+| 언어 | Kotlin 1.7.20 |
 | 아키텍처 | MVVM (ViewModel + LiveData) |
 | 비동기 | Kotlin Coroutines (`viewModelScope`, `Dispatchers.IO`) |
-| 로컬 DB | Room 2.2.5 (suspend DAO) |
+| 로컬 DB | Room 2.5.2 (suspend DAO) |
 | 목록 | RecyclerView + Paging 2 |
 | 화면 전환 | Navigation Component 2.2.2 |
 | 네트워크 | OkHttp `HttpUrl` + `DocumentBuilderFactory` XML 파싱 |
+| 빌드 | AGP 7.4.2 / Gradle 7.6.4 / compileSdk 33 |
 
 ## 구조
 
@@ -55,9 +56,9 @@ app/src/main/java/com/example/gc_last/
 
 ### 요구사항
 
-- Android Studio 4.0 이상
-- Android SDK 29, Build Tools 29.0.3
-- JDK 8
+- JDK 17
+- Android SDK Platform 33, Build-Tools 33.0.2
+- Android Studio (선택) 또는 Gradle wrapper
 
 ### API 키 설정 (필수)
 
@@ -77,6 +78,17 @@ git clone https://github.com/DongJooKim1541/AndroidProjects_realtimeSubway.git
 cd AndroidProjects_realtimeSubway
 ./gradlew assembleDebug
 ```
+
+산출물: `app/build/outputs/apk/debug/app-debug.apk`
+
+`local.properties`에 SDK 경로도 필요합니다(Android Studio가 자동 생성).
+
+```properties
+sdk.dir=C:/Users/<사용자>/AppData/Local/Android/Sdk
+```
+
+> 프로젝트 경로에 한글이 포함된 환경을 지원하기 위해 `gradle.properties`에
+> `android.overridePathCheck=true`를 설정해 두었습니다.
 
 ## 문서
 

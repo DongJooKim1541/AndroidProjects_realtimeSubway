@@ -8,7 +8,7 @@ import com.example.gc_last.model.FreshDao
 import com.example.gc_last.model.FreshData
 import com.example.gc_last.model.SaveItem
 
-@Database(entities = [FreshData::class, SaveItem::class], version = 1)
+@Database(entities = [FreshData::class, SaveItem::class], version = 1, exportSchema = false)
 abstract class DatabaseModule : RoomDatabase() {
 
     abstract fun freshDao(): FreshDao
