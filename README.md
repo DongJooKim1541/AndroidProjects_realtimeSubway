@@ -1,6 +1,6 @@
 # 실시간 지하철 도착 정보 앱
 
-<img src="./docs/images/icon.jpg" width="20%">
+<img src="./app/src/main/res/drawable-v24/splash_image.jpg" width="20%">
 
 자주 이용하는 지하철역을 저장해 두고 도착 시간표, 첫차/막차, 주변 버스 정류장과 출구 정보를 빠르게 확인하는 Android 앱입니다.
 
