@@ -3,6 +3,17 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
 
+// 서울 열린데이터광장 인증키는 소스에 두지 않는다.
+// local.properties 의 SEOUL_OPENAPI_KEY 또는 같은 이름의 환경변수에서 읽는다.
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withInputStream { localProperties.load(it) }
+}
+def seoulOpenApiKey = localProperties.getProperty('SEOUL_OPENAPI_KEY')
+        ?: System.getenv('SEOUL_OPENAPI_KEY')
+        ?: ''
+
 android {
     compileSdkVersion 29
     buildToolsVersion "29.0.3"
@@ -14,6 +25,7 @@ android {
         versionCode 1
         versionName "1.0"
 
+        buildConfigField "String", "SEOUL_OPENAPI_KEY", "\"${seoulOpenApiKey}\""
     }
 
     buildTypes {
@@ -30,43 +42,34 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
-
-
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+
     implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation 'androidx.core:core-ktx:1.3.0'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
-    implementation 'androidx.navigation:navigation-fragment-ktx:2.2.2'
-    implementation 'androidx.navigation:navigation-ui-ktx:2.2.2'
-
-
-    implementation 'ru.gildor.coroutines:kotlin-coroutines-okhttp:1.0'
-
-    implementation 'androidx.room:room-runtime:2.2.5'
-    kapt 'androidx.room:room-compiler:2.2.5'
-
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.3.0-alpha03'
-    implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
+    implementation 'androidx.fragment:fragment-ktx:1.2.4'
     implementation 'androidx.recyclerview:recyclerview:1.1.0'
 
-    implementation 'androidx.paging:paging-common:2.1.2'
-    implementation 'androidx.paging:paging-runtime:2.1.2'
-
-    implementation 'androidx.fragment:fragment-ktx:1.2.4'
     implementation 'androidx.navigation:navigation-fragment-ktx:2.2.2'
     implementation 'androidx.navigation:navigation-ui-ktx:2.2.2'
+
+    // Room. suspend DAO 함수를 쓰기 위해 room-ktx 가 필요하다.
+    implementation 'androidx.room:room-runtime:2.2.5'
+    implementation 'androidx.room:room-ktx:2.2.5'
+    kapt 'androidx.room:room-compiler:2.2.5'
+
+    // viewModelScope / LiveData observe 확장 함수
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.2.0'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.2.0'
+    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.2.0'
+
+    implementation 'androidx.paging:paging-runtime:2.1.2'
+
+    // HttpUrl 로 API 주소를 만드는 용도로만 사용한다.
     implementation 'com.squareup.okhttp3:okhttp:4.7.2'
-
-    implementation "com.squareup.moshi:moshi-kotlin:1.9.3"
-    implementation "com.squareup.moshi:moshi-adapters:1.9.3"
-
-    implementation 'com.google.code.gson:gson:2.8.2'
-    implementation 'com.squareup.retrofit2:retrofit:2.4.0'
-    implementation 'com.squareup.retrofit2:converter-gson:2.4.0'
-    implementation 'com.squareup.okhttp3:logging-interceptor:3.4.2'
 }

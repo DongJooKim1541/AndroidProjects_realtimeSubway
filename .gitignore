@@ -1,14 +1,22 @@
+# Android Studio / IntelliJ
 *.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
+.idea/
 .DS_Store
+
+# Gradle
+.gradle/
 /build
 /captures
 .externalNativeBuild
 .cxx
+
+# 로컬 설정 (SDK 경로, API 키)
+/local.properties
+
+# 빌드 산출물
+*.apk
+*.aab
+app/release/
+
+# Claude Code
+.claude/

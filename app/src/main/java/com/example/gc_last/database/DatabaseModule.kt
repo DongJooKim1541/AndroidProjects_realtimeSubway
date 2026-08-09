@@ -14,18 +14,22 @@ abstract class DatabaseModule : RoomDatabase() {
     abstract fun freshDao(): FreshDao
 
     companion object {
-        private var database: DatabaseModule? = null
-
         private const val ROOM_DB = "subway.db"
 
-        fun getDatabase(context: Context): DatabaseModule {
-            if (database == null) {
-                database = Room.databaseBuilder(
+        @Volatile
+        private var database: DatabaseModule? = null
+
+        /**
+         * `allowMainThreadQueries()`는 제거했다. 모든 조회/삭제는 suspend DAO 함수로 바뀌어
+         * 코루틴(IO)에서 실행된다.
+         */
+        fun getDatabase(context: Context): DatabaseModule =
+            database ?: synchronized(this) {
+                database ?: Room.databaseBuilder(
                     context.applicationContext,
-                    DatabaseModule::class.java, ROOM_DB
-                ).allowMainThreadQueries().fallbackToDestructiveMigration().build()
+                    DatabaseModule::class.java,
+                    ROOM_DB
+                ).fallbackToDestructiveMigration().build().also { database = it }
             }
-            return database!!
-        }
     }
 }

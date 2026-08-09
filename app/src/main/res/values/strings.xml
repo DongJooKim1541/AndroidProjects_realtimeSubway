@@ -1,6 +1,26 @@
 <resources>
-    <string name="app_name">가즈아 \u261E</string>
+    <string name="app_name">가즈아 ☞</string>
 
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <!-- 목록 항목 -->
+    <string name="arrives_in">%1$s 뒤 도착</string>
+    <string name="bound_for">%1$s행</string>
+    <string name="station_suffix">%1$s역</string>
+
+    <!-- 검색 화면 -->
+    <string name="select_station_title">지하철역을 선택하세요.</string>
+    <string name="select_day_title">날짜를 선택하세요.</string>
+    <string name="search_input_required">지하철역과 날짜를 입력해주세요.</string>
+    <string name="exit_confirm_message">앱을 종료하시겠습니까?</string>
+    <string name="exit">종료</string>
+    <string name="cancel">취소</string>
+
+    <!-- 결과 화면 -->
+    <string name="direction_up">상행</string>
+    <string name="direction_down">하행</string>
+    <string name="nothing_to_save">저장할 데이터가 없습니다.</string>
+    <string name="save_success">데이터가 저장되었습니다.</string>
+    <string name="load_failed">시간표를 불러오지 못했습니다.</string>
+
+    <!-- 저장소 화면 -->
+    <string name="no_saved_condition">해당되는 데이터가 없습니다!</string>
 </resources>

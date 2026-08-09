@@ -5,247 +5,64 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.gc_last.model.DayOfWeek
+import com.example.gc_last.data.SubwayRepository
+import com.example.gc_last.data.upcoming
 import com.example.gc_last.model.FreshData
-import com.example.gc_last.model.Subways
-import com.example.gc_last.network.NetworkModule
-import com.example.gc_last.result.TimeCalculate
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.w3c.dom.Document
-import org.w3c.dom.Element
-import org.w3c.dom.Node
-import org.w3c.dom.NodeList
-import javax.xml.parsers.DocumentBuilderFactory
 
-//지하철 시간표 ViewModel 구현
-class SavedTimeTableViewModel: ViewModel() {
+/** 시간표 화면에서 고를 수 있는 조회 범위. */
+enum class TimeTableFilter {
+    /** 전체 시간표 */
+    ALL,
 
-    lateinit var selectSubway:String
-    lateinit var selectDay:String
-    lateinit var resultDirection:String
-    lateinit var line_num:String
+    /** 첫차 */
+    FIRST,
 
-    private val resultList: MutableLiveData<List<FreshData>> = MutableLiveData()
-    fun resultList(): LiveData<List<FreshData>> = resultList
+    /** 막차 */
+    LAST,
 
-    val errorHandler = CoroutineExceptionHandler { _, exception ->
-        Log.e("error", exception.message)
+    /** 곧 도착하는 열차 1편 */
+    UPCOMING
+}
+
+/**
+ * 저장된 역의 시간표 ViewModel.
+ *
+ * 이전에는 필터별로 `loadDataFromURL` / `loadStartDataFromURL` / `loadEndDataFromURL` /
+ * `loadRealTimeDataFromURL` 네 함수가 같은 파싱 로직을 그대로 복제하고 있었다(250줄).
+ * 조회는 [SubwayRepository]가 담당하고, 여기서는 [TimeTableFilter]로 결과만 추린다.
+ */
+class SavedTimeTableViewModel : ViewModel() {
+
+    private val _timeTable = MutableLiveData<List<FreshData>>()
+    val timeTable: LiveData<List<FreshData>> = _timeTable
+
+    private val errorHandler = CoroutineExceptionHandler { _, throwable ->
+        Log.e(TAG, throwable.message ?: throwable.javaClass.simpleName, throwable)
+        _timeTable.postValue(emptyList())
     }
 
-    fun transferData(selectStationCode: String, selectWeekTag: String, selectInOutTag: String){
-        selectSubway=selectStationCode
-        selectDay=selectWeekTag
-        resultDirection=selectInOutTag
-    }
-    //xml 파싱
-    fun loadDataFromURL(selectStationCode: String, selectWeekTag: String, selectInOutTag: String) {
-
-        val request = NetworkModule.makeHttprequest_subwayTime(
-
-            NetworkModule.makeHttpUrl_subwayTime(
-                station_code = Subways.valueOf(selectStationCode).scode,
-                week_tag = DayOfWeek.valueOf(selectWeekTag).weekcode,
-                inout_tag = selectInOutTag
-            )
-        )
-
+    fun load(subwayName: String, dayName: String, direction: String, filter: TimeTableFilter) {
         viewModelScope.launch(Dispatchers.IO + errorHandler) {
-            Log.i("FRESH1", request.url.toString())
-
-            val xml : Document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(request.url.toString())
-            xml.documentElement.normalize()
-
-            val list: NodeList =xml.getElementsByTagName("row")
-
-            val lists = mutableListOf<FreshData>()
-            for(i in 0..list.length-1){
-                var n: Node =list.item(i)
-
-                if(n.getNodeType()== Node.ELEMENT_NODE){
-                    val elem=n as Element
-
-                    val map=mutableMapOf<String,String>()
-
-                    for(j in 0..elem.attributes.length - 1){
-                        map.putIfAbsent(elem.attributes.item(j).nodeName, elem.attributes.item(j).nodeValue)
-                    }
-                    line_num=elem.getElementsByTagName("LINE_NUM").item(0).textContent.toString()
-                    val station_name=elem.getElementsByTagName("STATION_NM").item(0).textContent.toString()
-                    val arrivetime=elem.getElementsByTagName("ARRIVETIME").item(0).textContent.toString()
-                    val subway_end_name=elem.getElementsByTagName("SUBWAYENAME").item(0).textContent.toString()
-                    val select_Subway=selectSubway
-                    val select_Day=selectDay
-                    val result_Direction=resultDirection
-
-
-                    val fresh= FreshData( null,null,line_num,station_name,arrivetime,subway_end_name,"",select_Subway,select_Day,result_Direction)
-                    lists.add(fresh)
-                }
-            }
-            Log.d("XML","List의 크기: ${lists.size}")
-            resultList.postValue(lists)
+            val all = SubwayRepository.loadTimeTable(subwayName, dayName, direction)
+            _timeTable.postValue(all.applyFilter(filter))
         }
     }
-    //xml 파싱
-    fun loadStartDataFromURL(selectStationCode: String, selectWeekTag: String, selectInOutTag: String) {
-        val request = NetworkModule.makeHttprequest_subwayTime(
 
-            NetworkModule.makeHttpUrl_subwayTime(
-                station_code = Subways.valueOf(selectStationCode).scode,
-                week_tag = DayOfWeek.valueOf(selectWeekTag).weekcode,
-                inout_tag = selectInOutTag
-            )
-        )
-
-        viewModelScope.launch(Dispatchers.IO + errorHandler) {
-
-            val xml : Document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(request.url.toString())
-            xml.documentElement.normalize()
-
-            val list: NodeList =xml.getElementsByTagName("row")
-
-            val lists = mutableListOf<FreshData>()
-
-            var n: Node =list.item(0)
-
-            if(n.getNodeType()== Node.ELEMENT_NODE){
-                val elem=n as Element
-
-                val map=mutableMapOf<String,String>()
-
-                for(j in 0..elem.attributes.length - 1){
-                    map.putIfAbsent(elem.attributes.item(j).nodeName, elem.attributes.item(j).nodeValue)
-                }
-                line_num=elem.getElementsByTagName("LINE_NUM").item(0).textContent.toString()
-                val station_name=elem.getElementsByTagName("STATION_NM").item(0).textContent.toString()
-                val arrivetime=elem.getElementsByTagName("ARRIVETIME").item(0).textContent.toString()
-                val subway_end_name=elem.getElementsByTagName("SUBWAYENAME").item(0).textContent.toString()
-                val select_Subway=selectSubway
-                val select_Day=selectDay
-                val result_Direction=resultDirection
-
-
-                val fresh= FreshData( null,null,line_num,station_name,arrivetime,subway_end_name,"",select_Subway,select_Day,result_Direction)
-                Log.i("ResultViewModel_Fresh", "selectSubway: $select_Subway, selectDay: $select_Day, resultDirection: $result_Direction")
-                lists.add(fresh)
-            }
-            resultList.postValue(lists)
-            Log.d("XML","List의 크기: ${lists.size}")
-        }
-    }
-    //xml 파싱
-    fun loadRealTimeDataFromURL(selectStationCode: String, selectWeekTag: String, selectInOutTag: String) {
-        val request = NetworkModule.makeHttprequest_subwayTime(
-
-            NetworkModule.makeHttpUrl_subwayTime(
-                station_code = Subways.valueOf(selectStationCode).scode,
-                week_tag = DayOfWeek.valueOf(selectWeekTag).weekcode,
-                inout_tag = selectInOutTag
-            )
-        )
-
-        Log.i("HTTP", request.toString())
-
-        viewModelScope.launch(Dispatchers.IO + errorHandler) {
-
-            val xml : Document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(request.url.toString())
-            xml.documentElement.normalize()
-            Log.i("FRESH1","Root element : "+xml.documentElement.nodeName)
-
-            val list:NodeList=xml.getElementsByTagName("row")
-
-            val lists = mutableListOf<FreshData>()
-            lateinit var timeDistance:String
-            for(i in 0..list.length-1){
-                var n: Node =list.item(i)
-
-                if(n.getNodeType()==Node.ELEMENT_NODE){
-                    val elem=n as Element
-
-                    val map=mutableMapOf<String,String>()
-
-                    for(j in 0..elem.attributes.length - 1){
-                        map.putIfAbsent(elem.attributes.item(j).nodeName, elem.attributes.item(j).nodeValue)
-                    }
-                    line_num=elem.getElementsByTagName("LINE_NUM").item(0).textContent.toString()
-                    val station_name=elem.getElementsByTagName("STATION_NM").item(0).textContent.toString()
-                    val arrivetime=elem.getElementsByTagName("ARRIVETIME").item(0).textContent.toString()
-                    val subway_end_name=elem.getElementsByTagName("SUBWAYENAME").item(0).textContent.toString()
-                    val select_Subway=selectSubway
-                    val select_Day=selectDay
-                    val result_Direction=resultDirection
-
-                    val timeCal=TimeCalculate(arrivetime)
-
-                    if(timeCal.diff.hours==0 && timeCal.diff.minutes>=0 && timeCal.diff.seconds>=0){
-                        if(lists.size<1){
-                            timeDistance="${timeCal.diff.minutes}분 ${timeCal.diff.seconds}초"
-                            val fresh=FreshData( null,null,line_num,station_name,arrivetime,subway_end_name,timeDistance,select_Subway,select_Day,result_Direction)
-                            lists.add(fresh)
-                        }
-                        else if(timeCal.diff.hours>0){
-                            if(lists.size<1){
-                                timeDistance="${timeCal.diff.hours}시간 ${timeCal.diff.minutes}분 ${timeCal.diff.seconds}초"
-                                val fresh=FreshData( null,null,line_num,station_name,arrivetime,subway_end_name,timeDistance,select_Subway,select_Day,result_Direction)
-                                lists.add(fresh)
-                            }
-                        }
-                    }
-                }
-            }
-            Log.d("XML","List의 크기: ${lists.size}")
-            resultList.postValue(lists)
-            }
+    /** 빈 응답에서도 안전하도록 first/last는 [listOfNotNull]로 감싼다. */
+    private fun List<FreshData>.applyFilter(filter: TimeTableFilter): List<FreshData> = when (filter) {
+        TimeTableFilter.ALL -> this
+        TimeTableFilter.FIRST -> listOfNotNull(firstOrNull())
+        TimeTableFilter.LAST -> listOfNotNull(lastOrNull())
+        TimeTableFilter.UPCOMING -> upcoming(UPCOMING_LIMIT)
     }
 
-    fun loadEndDataFromURL(selectStationCode: String, selectWeekTag: String, selectInOutTag: String) {
-        val request = NetworkModule.makeHttprequest_subwayTime(
+    companion object {
+        private const val TAG = "SavedTimeTableViewModel"
 
-            NetworkModule.makeHttpUrl_subwayTime(
-                station_code = Subways.valueOf(selectStationCode).scode,
-                week_tag = DayOfWeek.valueOf(selectWeekTag).weekcode,
-                inout_tag = selectInOutTag
-            )
-        )
-
-        Log.i("HTTP", request.toString())
-
-        viewModelScope.launch(Dispatchers.IO + errorHandler) {
-            Log.i("FRESH1", request.url.toString())
-
-            val xml : Document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(request.url.toString())
-            xml.documentElement.normalize()
-            Log.i("FRESH1","Root element : "+xml.documentElement.nodeName)
-
-            val list: NodeList =xml.getElementsByTagName("row")
-
-            val lists = mutableListOf<FreshData>()
-
-            var n: Node =list.item(list.length-1)
-
-            if(n.getNodeType()== Node.ELEMENT_NODE){
-                val elem=n as Element
-
-                val map=mutableMapOf<String,String>()
-
-                for(j in 0..elem.attributes.length - 1){
-                    map.putIfAbsent(elem.attributes.item(j).nodeName, elem.attributes.item(j).nodeValue)
-                }
-                line_num=elem.getElementsByTagName("LINE_NUM").item(0).textContent.toString()
-                val station_name=elem.getElementsByTagName("STATION_NM").item(0).textContent.toString()
-                val arrivetime=elem.getElementsByTagName("ARRIVETIME").item(0).textContent.toString()
-                val subway_end_name=elem.getElementsByTagName("SUBWAYENAME").item(0).textContent.toString()
-                val select_Subway=selectSubway
-                val select_Day=selectDay
-                val result_Direction=resultDirection
-
-                val fresh= FreshData( null,null,line_num,station_name,arrivetime,subway_end_name,"",select_Subway,select_Day,result_Direction)
-                Log.i("ResultViewModel_Fresh", "selectSubway: $select_Subway, selectDay: $select_Day, resultDirection: $result_Direction")
-                lists.add(fresh)
-            }
-            resultList.postValue(lists)
-        }
+        /** "곧 도착"은 가장 가까운 1편만 보여준다. */
+        private const val UPCOMING_LIMIT = 1
     }
 }

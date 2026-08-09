@@ -1,9 +1,7 @@
 package com.example.gc_last.search
 
 import android.os.Bundle
-import android.util.Log
 import android.view.ContextThemeWrapper
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,139 +9,150 @@ import android.widget.RadioButton
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AlertDialog
-import androidx.lifecycle.LiveData
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
-import androidx.paging.LivePagedListBuilder
-import androidx.paging.PagedList
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.gc_last.R
-import com.example.gc_last.database.DatabaseModule
 import com.example.gc_last.model.DayOfWeek
 import com.example.gc_last.model.Subways
-import com.example.gc_last.model.SaveItem
+import com.example.gc_last.network.SubwayApi
+import com.example.gc_last.util.NavKeys
 import kotlinx.android.synthetic.main.fragment_search.*
 import kotlinx.android.synthetic.main.fragment_search.view.*
-import kotlinx.android.synthetic.main.fragment_search.view.btn_search
 
-//메인 화면
-class SearchFragment : Fragment(){
+/** 메인 화면. 역/요일/방향을 고르고 결과 화면으로 넘어간다. */
+class SearchFragment : Fragment() {
 
-    var selectedSubway: String? = null
-    var selectedDay: String? = null
+    private var selectedSubway: String? = null
+    private var selectedDay: String? = null
 
-    val database by lazy {
-        DatabaseModule.getDatabase(requireContext())
+    private val searchViewModel by lazy {
+        ViewModelProvider(this).get(SearchViewModel::class.java)
     }
 
-    val searchAdapter by lazy { SearchAdapter(database.freshDao()) }
-    //지하철역 선택 dialog
-    val alertDialog1 by lazy {
+    private val searchAdapter by lazy {
+        SearchAdapter(onDelete = { saveId -> searchViewModel.delete(saveId) })
+    }
 
-        val builder = AlertDialog.Builder(requireContext())
-
-        builder.setTitle("지하철역을 선택하세요.")
-
-        builder.setItems(Subways.values().map { it.holder }.toTypedArray()) { dialog, index ->
+    private val stationDialog by lazy {
+        selectionDialog(
+            titleRes = R.string.select_station_title,
+            labels = Subways.values().map { it.holder }
+        ) { index ->
             with(Subways.values()[index]) {
-                selectedSubway = this.name
-                text_type.text = this.holder
+                selectedSubway = name
+                text_type.text = holder
             }
-            checkCondition()
         }
-
-        builder.setNegativeButton("취소", null)
-
-        builder.create()
     }
-    //요일 선택 dialog
-    val alertDialog2 by lazy {
 
-        val builder = AlertDialog.Builder(requireContext())
-        builder.setTitle("날짜를 선택하세요.")
-
-        builder.setItems(DayOfWeek.values().map { it.holder }.toTypedArray()) { dialog, index ->
+    private val dayDialog by lazy {
+        selectionDialog(
+            titleRes = R.string.select_day_title,
+            labels = DayOfWeek.values().map { it.holder }
+        ) { index ->
             with(DayOfWeek.values()[index]) {
-                selectedDay = this.name
-
-                txt_weekday.text = this.holder
+                selectedDay = name
+                txt_weekday.text = holder
             }
-            checkCondition()
         }
-
-        builder.setNegativeButton("취소", null)
-
-        builder.create()
     }
-
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_search, container, false)
-    }
+    ): View? = inflater.inflate(R.layout.fragment_search, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        layout_type.setOnClickListener { alertDialog1.show() }
-        layout_date.setOnClickListener { alertDialog2.show() }
+        layout_type.setOnClickListener { stationDialog.show() }
+        layout_date.setOnClickListener { dayDialog.show() }
 
         view.list_search.adapter = searchAdapter
         view.list_search.layoutManager = LinearLayoutManager(requireContext())
 
-        val pageLiveData: LiveData<PagedList<SaveItem>> = LivePagedListBuilder(database.freshDao().loadSaveItems(), 100).build()
+        searchViewModel.savedItems.observe(viewLifecycleOwner) { searchAdapter.submitList(it) }
 
-        pageLiveData.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
+        view.btn_search.setOnClickListener { onSearchClicked(view) }
 
-            searchAdapter.submitList(it)
-        })
-
-        view.btn_search.setOnClickListener {
-
-            if (selectedSubway == null || selectedDay == null) {
-
-                Toast.makeText(requireContext(), "지하철역과 날짜를 입력해주세요.", Toast.LENGTH_LONG).show()
-            } else {
-
-                findNavController().navigate(
-                    R.id.action_searchFragment_to_resultFragment,
-                    Bundle().apply {
-                        putString("SELECT_SUBWAY", selectedSubway)
-                        putString("SELECT_DAY", selectedDay)
-                        putString("RESULT_DIRECTION", view.findViewById<RadioButton>(view.radio_layout.checkedRadioButtonId).tag.toString())
-                    })
-                selectedSubway = null
-                selectedDay = null
+        // requireActivity() 대신 viewLifecycleOwner에 묶어 화면이 사라질 때 콜백이 해제되도록 한다.
+        requireActivity().onBackPressedDispatcher.addCallback(
+            viewLifecycleOwner,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() = showExitDialog()
             }
-        }
+        )
 
-        activity?.onBackPressedDispatcher?.addCallback(requireActivity(), object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                val builder= AlertDialog.Builder(ContextThemeWrapper(requireContext(), R.style.Theme_AppCompat_Light_Dialog))
-                
-                builder.setMessage("앱을 종료하시겠습니까?")
-                builder.setPositiveButton("종료") { _, _ ->
-                   activity?.finish()
-                }
-                builder.setNegativeButton("취소") { _, _ ->
-                }
-                builder.show()
-            }
-        })
+        updateSearchButtonState()
     }
 
-    private fun changeInputTextBydate() {
-        checkCondition()
+    private fun onSearchClicked(view: View) {
+        val subway = selectedSubway
+        val day = selectedDay
 
-        selectedDay?.let { txt_weekday.text = it }
+        if (subway == null || day == null) {
+            Toast.makeText(requireContext(), R.string.search_input_required, Toast.LENGTH_LONG).show()
+            return
+        }
+
+        findNavController().navigate(
+            R.id.action_searchFragment_to_resultFragment,
+            Bundle().apply {
+                putString(NavKeys.SELECT_SUBWAY, subway)
+                putString(NavKeys.SELECT_DAY, day)
+                putString(NavKeys.RESULT_DIRECTION, view.selectedDirection())
+            }
+        )
+
+        selectedSubway = null
+        selectedDay = null
+        updateSearchButtonState()
     }
 
-    private fun checkCondition() {
-        if (selectedSubway != null && selectedDay != null) {
-            btn_search.setBackgroundColor(resources.getColor(android.R.color.holo_green_dark))
-            btn_search.setTextColor(resources.getColor(android.R.color.white))
+    /** 아무것도 선택되지 않았으면 상행으로 본다. 이전에는 이 경우 NPE가 났다. */
+    private fun View.selectedDirection(): String {
+        val checkedId = radio_layout.checkedRadioButtonId
+        if (checkedId == View.NO_ID) return SubwayApi.DIRECTION_UP
+        return findViewById<RadioButton>(checkedId)?.tag?.toString() ?: SubwayApi.DIRECTION_UP
+    }
+
+    private fun selectionDialog(
+        titleRes: Int,
+        labels: List<String>,
+        onSelected: (index: Int) -> Unit
+    ): AlertDialog = AlertDialog.Builder(requireContext())
+        .setTitle(titleRes)
+        .setItems(labels.toTypedArray()) { _, index ->
+            onSelected(index)
+            updateSearchButtonState()
         }
+        .setNegativeButton(R.string.cancel, null)
+        .create()
+
+    private fun showExitDialog() {
+        AlertDialog.Builder(
+            ContextThemeWrapper(requireContext(), R.style.Theme_AppCompat_Light_Dialog)
+        )
+            .setMessage(R.string.exit_confirm_message)
+            .setPositiveButton(R.string.exit) { _, _ -> activity?.finish() }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    /**
+     * 이전 구현에는 조건을 만족할 때 초록색으로 바꾸는 분기만 있어서,
+     * 검색 후 선택이 초기화되어도 버튼이 계속 초록색으로 남았다.
+     */
+    private fun updateSearchButtonState() {
+        val ready = selectedSubway != null && selectedDay != null
+        val background = if (ready) android.R.color.holo_green_dark else android.R.color.darker_gray
+        val text = if (ready) android.R.color.white else android.R.color.black
+
+        btn_search.setBackgroundColor(ContextCompat.getColor(requireContext(), background))
+        btn_search.setTextColor(ContextCompat.getColor(requireContext(), text))
     }
 }
-

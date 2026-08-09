@@ -1,249 +1,203 @@
-# 소프트웨어 설계 문서 (SDD)
-## 실시간 지하철 도착 정보 앱
+# 설계 문서 (SDD)
+
+실시간 지하철 도착 정보 앱 · 2021 모바일 프로그래밍
 
 ---
 
 ## 1. 개요
 
-실시간 지하철 도착 정보 앱은 자주 이용하는 역을 등록하여 역에 대한 실시간 도착 정보, 시간표, 근처 버스 정류장, 출구 정보 등을 빠르게 제공하는 모바일 애플리케이션입니다.
+서울 열린데이터광장의 지하철 시간표 API를 조회해 선택한 역의 도착 정보를 보여주고,
+자주 쓰는 조회 조건을 로컬에 저장해 다시 열람할 수 있게 하는 단일 Activity Android 앱이다.
 
-**프로젝트**: 모바일 프로그래밍 수업 기말고사  
-**년도**: 2021  
-**언어**: Kotlin  
-**아키텍처**: MVVM (Model-View-ViewModel)
-
----
-
-## 2. 시스템 아키텍처
-
-```
-View Layer (Fragment)
-    ↓
-ViewModel Layer
-    ↓
-Model Layer (Database, Network)
-    ↓
-Data Sources (Room, API)
-```
-
-### 2.1 레이어 구성
-
-| 레이어 | 역할 |
-|--------|------|
-| View (Fragment) | UI 표시 및 사용자 상호작용 |
-| ViewModel | 비즈니스 로직 및 데이터 관리 |
-| Repository | 데이터 소스 추상화 |
-| Database (Room) | 로컬 지하철 역/시간표 저장 |
-| Network (API) | 실시간 도착 정보 조회 |
+| 항목 | 값 |
+|------|-----|
+| 언어 | Kotlin 1.3.71 |
+| minSdk / targetSdk / compileSdk | 26 / 29 / 29 |
+| 아키텍처 | MVVM (ViewModel + LiveData) |
+| 화면 구성 | 단일 Activity + 5개 Fragment (Navigation Component) |
+| 지원 노선 | 2호선 20개 역 |
 
 ---
 
-## 3. 주요 컴포넌트
+## 2. 아키텍처
 
-### 3.1 Database Layer
+```
+Fragment (View)
+   │  사용자 입력 / LiveData 관찰
+   ▼
+ViewModel                      ← viewModelScope + Dispatchers.IO
+   │  조회 요청 / 결과 필터링
+   ▼
+SubwayRepository ──────────────► Seoul OpenAPI (XML)
+   │
+FreshDao (Room) ───────────────► subway.db
+```
 
-**DatabaseModule.kt**
-- Room Database 설정
-- DAO (Data Access Object) 정의
-- 데이터 모델: FreshData, DayOfWeek, Subways
+### 계층별 책임
 
-**Models**
-- `FreshData`: 지하철 역 정보 및 시간표 데이터
-- `Subways`: 지하철 노선 정보
-- `DayOfWeek`: 요일별 시간표 데이터
+| 계층 | 클래스 | 책임 |
+|------|--------|------|
+| View | `SearchFragment`, `ResultFragment`, `SaveFragment`, `SavedTimeTableFragment`, `SplashFragment` | 화면 표시, 입력 수집, LiveData 관찰 |
+| ViewModel | `SearchViewModel`, `ResultViewModel`, `SaveViewModel`, `SavedTimeTableViewModel` | 조회 요청, 결과 필터링, 저장 |
+| Repository | `SubwayRepository` | API 호출 + XML 파싱 (앱 전체 단일 구현) |
+| Network | `SubwayApi` | 요청 URL 생성, 인증키 주입 |
+| Data | `FreshDao`, `DatabaseModule` | Room 영속화 |
+| Util | `TimeRemaining`, `NavKeys` | 남은 시간 계산, Bundle 키 상수 |
 
-### 3.2 Network Layer
-
-**NetworkModule.kt**
-- Retrofit + OkHttp 설정
-- API 엔드포인트 정의
-- 실시간 도착 정보 조회 API
-
-**TimeCalculate.kt**
-- 실시간 도착 시간 계산 유틸리티
-
-### 3.3 UI Components
-
-**Fragments**
-- **SplashFragment**: 앱 시작 화면
-- **SearchFragment**: 역 검색 및 조회
-- **ResultFragment**: 검색 결과 및 실시간 도착 정보 표시
-- **SaveFragment**: 즐겨찾기 역 추가
-- **SavedTimeTableFragment**: 저장된 역의 시간표 조회
-
-**Adapters**
-- `SearchAdapter`: 검색 결과 목록
-- `ResultAdapter`: 도착 정보 목록
-- `SavedTimeTableAdapter`: 저장된 시간표 목록
-- `Save_adapter`: 즐겨찾기 역 목록
-
-### 3.4 ViewModel Layer
-
-**ViewModels**
-- `SaveViewModel`: 즐겨찾기 역 관리
-- `ResultViewModel`: 실시간 도착 정보 관리
-- `SavedTimeTableViewModel`: 저장된 시간표 조회
+ViewModel은 모두 **Fragment 스코프**(`ViewModelProvider(this)`)다.
+조회 상태가 화면을 벗어난 뒤에도 남지 않는다.
 
 ---
 
-## 4. 데이터 흐름
+## 3. 데이터 모델
 
-### 4.1 역 검색 흐름
+### 3.1 Room 엔티티
 
-```
-User Input (SearchFragment)
-    ↓
-SearchViewModel (검색 쿼리 처리)
-    ↓
-DatabaseModule (역 정보 조회)
-    ↓
-SearchAdapter (결과 표시)
-```
+**`SaveItem`** — 저장한 조회 조건 (테이블 `SaveItem`)
 
-### 4.2 실시간 도착 정보 조회
-
-```
-User Select Station (SearchAdapter)
-    ↓
-ResultFragment → ResultViewModel
-    ↓
-NetworkModule (API 호출)
-    ↓
-TimeCalculate (도착 시간 계산)
-    ↓
-ResultAdapter (정보 표시)
-```
-
-### 4.3 역 저장/조회
-
-```
-User Select SaveFragment
-    ↓
-SaveViewModel (저장된 역 목록 조회)
-    ↓
-DatabaseModule (저장된 역 정보)
-    ↓
-Save_adapter (목록 표시)
-```
-
----
-
-## 5. 기술 스택
-
-| 기술 | 버전 | 용도 |
+| 컬럼 | 타입 | 설명 |
 |------|------|------|
-| Kotlin | 1.4.x | 언어 |
-| Jetpack Lifecycle | 2.3.0 | ViewModel 관리 |
-| Room | 2.2.5 | 로컬 데이터베이스 |
-| Retrofit | 2.4.0 | HTTP 클라이언트 |
-| OkHttp | 4.7.2 | 네트워크 통신 |
-| GSON | 2.8.2 | JSON 파싱 |
-| Moshi | 1.9.3 | JSON 변환 |
-| Navigation | 2.2.2 | Fragment 네비게이션 |
-| RecyclerView | 1.1.0 | 목록 표시 |
-| Paging | 2.1.2 | 페이징 처리 |
+| `id` | Long? (PK, autoGenerate) | 저장 항목 식별자 |
+| `saveTitle` | String | 목록에 표시할 이름 (예: "강남역") |
+| `saveSubwayDirection` | String | "상행" / "하행" |
+| `saveSubwayDays` | String | 요일 구분 |
+| `saveSubwayLineNum` | String | 호선 (예: "02호선") |
+| `saveSubwayStationName` | String | 역 이름 |
 
----
+**`FreshData`** — 조회된 열차 1편 (테이블 **`Subway`**, 클래스명과 테이블명이 다름에 주의)
 
-## 6. 주요 기능 설계
+| 컬럼 | 타입 | 설명 |
+|------|------|------|
+| `id` | Long? (PK) | 행 식별자 |
+| `saveId` | Long? (FK → `SaveItem.id`, CASCADE) | 소속 저장 항목 |
+| `line_num` | String | 호선 |
+| `station_name` | String | 역 이름 |
+| `arrivetime` | String | 도착 시각 `HH:mm:ss` |
+| `subway_end_name` | String | 종착역 |
+| `timeDistance` | String | 남은 시간 표기 (예: "3분 20초") |
+| `selectSubway` | String? | 조회 조건 — `Subways` 상수 이름 |
+| `selectDay` | String? | 조회 조건 — `DayOfWeek` 상수 이름 |
+| `resultDirection` | String? | 조회 조건 — "1"(상행) / 그 외(하행) |
 
-### 6.1 역 검색 및 조회
-- 사용자가 지하철 역명 입력
-- 데이터베이스에서 일치하는 역 검색
-- 검색 결과 목록 표시
-- 선택한 역의 실시간 도착 정보 조회
+### 3.2 열거형
 
-### 6.2 실시간 도착 정보
-- API를 통해 선택한 역의 실시간 도착 정보 수신
-- 도착 예정 시간 계산 및 표시
-- 상행/하행선 구분 표시
-- 새로고침 기능 제공
+**`Subways`** — 2호선 20개 역. `holder`는 표시 이름, `scode`는 API 역 코드.
+**`DayOfWeek`** — 평일(1) / 토요일(2) / 일요일(3).
 
-### 6.3 시간표 조회
-- 요일별 시간표 데이터 저장 (Room)
-- 저장된 역의 시간표 조회
-- 요일별 필터링 기능
+> ⚠️ 두 열거형의 **상수 이름이 DB와 Bundle에 그대로 저장**된다.
+> 이름 변경이나 순서 변경은 기존 저장 데이터를 읽지 못하게 만든다.
 
-### 6.4 즐겨찾기 관리
-- 자주 이용하는 역 저장
-- 저장된 역 목록 표시
-- 저장된 역 삭제 기능
+### 3.3 DAO
 
----
-
-## 7. 데이터 모델
-
-### 7.1 FreshData
 ```kotlin
-@Entity
-data class FreshData(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    val stationName: String,
-    val line: String,
-    val departureTime: String,
-    val arrivalTime: String,
-    val direction: String
-)
+suspend fun insertFresh(freshData: List<FreshData>)
+suspend fun insertSave(saveItem: SaveItem): Long
+fun loadSaveItems(): DataSource.Factory<Int, SaveItem>
+suspend fun loadSavedCondition(saveId: Long): FreshData?   // WHERE saveId = :saveId LIMIT 1
+fun loadFreshData(saveId: Long): DataSource.Factory<Int, FreshData>
+suspend fun deleteSaveData(saveId: Long)
 ```
 
-### 7.2 Subways
-```kotlin
-@Entity
-data class Subways(
-    @PrimaryKey val id: String,
-    val stationName: String,
-    val subwayLine: String,
-    val exits: List<String>
-)
-```
+목록 조회는 Paging 2의 `DataSource.Factory`, 단건 조회/쓰기는 suspend 함수다.
+`allowMainThreadQueries()`는 사용하지 않는다.
 
 ---
 
-## 8. 화면 구성
+## 4. 네트워크
 
-| 화면 | 설명 |
+### 4.1 요청
+
+```
+http://openapi.seoul.go.kr:8088/{KEY}/xml/SearchSTNTimeTableByIDService/1/250/{0+역코드}/{요일}/{방향}
+```
+
+- `KEY`는 `local.properties`(`SEOUL_OPENAPI_KEY`) 또는 동명의 환경변수에서 읽어
+  `BuildConfig.SEOUL_OPENAPI_KEY`로 주입된다. 소스에는 없다.
+- 역 코드 앞의 `0`은 호선 접두사이며 현재 2호선만 지원한다.
+- 조회 범위 `1~250`은 하루 운행 편성을 모두 담기 위한 상한이다.
+
+### 4.2 응답 파싱
+
+응답은 XML이며 `<row>` 엘리먼트 하나가 열차 1편이다.
+`SubwayRepository`가 `LINE_NUM`, `STATION_NM`, `ARRIVETIME`, `SUBWAYENAME` 네 태그를 읽어
+`FreshData`로 변환한다.
+
+```kotlin
+fun loadTimeTable(subwayName: String, dayName: String, direction: String): List<FreshData>
+```
+
+블로킹 호출이므로 반드시 IO 디스패처에서 실행한다.
+
+---
+
+## 5. 시간 계산
+
+`TimeRemaining.until(arriveTime)`이 현재 시각과 도착 시각(`HH:mm:ss`)의 차이를
+`java.time.Duration`으로 돌려준다. 파싱 실패 시 `null`이다.
+
+`List<FreshData>.upcoming(limit)`는 아직 지나지 않은 편성만 남기고
+`timeDistance`에 "3분 20초" / "1시간 3분 20초" 형태를 채운 뒤 앞에서 `limit`개를 취한다.
+
+- 결과 화면: `limit = 2`
+- 시간표 "곧 도착": `limit = 1`
+
+**제약**: 날짜 정보 없이 시각만 비교하므로, 자정을 넘겨 운행하는 편성(현재 23:50, 도착 00:15)은
+음수가 되어 제외된다.
+
+---
+
+## 6. 화면 흐름
+
+```
+SplashFragment ──(3초)──► SearchFragment
+                              │
+                   ┌──────────┴───────────┐
+                   ▼                      ▼
+            ResultFragment          SaveFragment
+             (검색 결과)            (저장 항목 열람)
+                                          │
+                                          ▼
+                                SavedTimeTableFragment
+```
+
+### 6.1 SearchFragment
+
+역·요일을 다이얼로그로 고르고 방향은 라디오 버튼으로 선택한다.
+두 값이 모두 선택되어야 검색 버튼이 활성 색상으로 바뀐다.
+하단에는 저장된 조회 조건 목록(`SearchAdapter`)이 표시되고, 삭제 버튼은
+`SearchViewModel.delete()`로 위임된다.
+
+### 6.2 ResultFragment
+
+전달받은 조건으로 `ResultViewModel.load()`를 호출하고, 결과 2편을 목록에 표시한다.
+FAB를 누르면 조회 조건과 결과가 Room에 저장된다.
+조회 실패 시 `loadFailed`가 관찰되어 안내 문구를 띄운다.
+
+### 6.3 SaveFragment
+
+`SAVE_ID`로 저장된 열차 목록(Paging)과 저장 당시 조건을 불러온다.
+시간표 화면 이동, 네이버 지도 버스/출구 검색 연결, 새로고침을 제공한다.
+
+### 6.4 SavedTimeTableFragment
+
+`TimeTableFilter`(ALL / FIRST / LAST / UPCOMING) 네 버튼으로 같은 조회 결과를 다르게 추려 보여준다.
+
+---
+
+## 7. 오류 처리
+
+각 ViewModel은 `CoroutineExceptionHandler`로 예외를 잡아 로그를 남기고 빈 목록을 게시한다.
+`ResultViewModel`은 추가로 `loadFailed` LiveData를 노출해 화면이 로딩 상태에 머무르지 않게 한다.
+
+---
+
+## 8. 알려진 제약
+
+| 항목 | 내용 |
 |------|------|
-| SplashScreen | 앱 로딩 화면 |
-| SearchScreen | 역 검색 화면 |
-| ResultScreen | 도착 정보 표시 화면 |
-| SaveScreen | 즐겨찾기 추가 화면 |
-| TimeTableScreen | 저장된 역 시간표 조면 |
-
----
-
-## 9. 보안 고려사항
-
-- **로컬 데이터**: Room Database를 통한 암호화된 저장
-- **API 통신**: HTTPS를 통한 안전한 데이터 전송
-- **입력 검증**: 사용자 입력값 유효성 검사
-
----
-
-## 10. 성능 최적화
-
-- **Paging**: 대량 데이터 로딩 시 페이징 처리
-- **LiveData**: 데이터 변경 감지 및 효율적 업데이트
-- **RecyclerView**: 목록 표시 최적화
-- **Coroutine**: 비동기 처리를 통한 메인 스레드 보호
-
----
-
-## 11. 테스트 전략
-
-- **단위 테스트**: ViewModel, Repository 로직 검증
-- **통합 테스트**: Database, Network 통합 검증
-- **UI 테스트**: Fragment, Activity 동작 검증
-
----
-
-## 12. 배포 고려사항
-
-- **최소 SDK**: API 26 (Android 8.0)
-- **목표 SDK**: API 29 (Android 10)
-- **빌드 도구**: 29.0.3
-- **App Bundle**: Google Play 배포용 번들 지원
-
----
-
-**최종 수정**: 2021년  
-**상태**: 완료
+| 노선 | 2호선 20개 역만 지원 (`Subways` 하드코딩) |
+| 자정 경계 | 날짜 없이 시각만 비교하므로 막차 이후 편성은 제외됨 |
+| 통신 | API가 HTTPS를 제공하지 않아 평문 HTTP + `usesCleartextTraffic` 사용 |
+| Paging | Paging 2 (`PagedListAdapter`) 사용, Paging 3 미적용 |
+| View 접근 | `kotlin-android-extensions` synthetic 사용, ViewBinding 미적용 |
+| SDK | compileSdk/targetSdk 29로 현재 Play Store 배포 기준 미만 |

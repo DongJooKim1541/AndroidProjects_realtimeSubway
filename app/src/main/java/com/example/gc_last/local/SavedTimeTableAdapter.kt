@@ -1,64 +1,38 @@
 package com.example.gc_last.local
 
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.paging.PagedListAdapter
-import androidx.recyclerview.widget.DiffUtil
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.gc_last.R
 import com.example.gc_last.model.FreshData
-import kotlinx.android.synthetic.main.fragment_saved_time_table.view.*
-import kotlinx.android.synthetic.main.list_item_fresh.view.*
 import kotlinx.android.synthetic.main.list_item_timetable.view.*
 
-//역 시간표 Adapter
-class SavedTimeTableAdapter : RecyclerView.Adapter<ItemViewHolder>() {
+/** 시간표 화면 목록 어댑터. `list_item_timetable`을 바인딩한다. */
+class SavedTimeTableAdapter : RecyclerView.Adapter<SavedTimeTableAdapter.TimeTableViewHolder>() {
 
-    var freshList: List<FreshData> = ArrayList()
+    var freshList: List<FreshData> = emptyList()
+        set(value) {
+            field = value
+            notifyDataSetChanged()
+        }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemViewHolder {
-        val rootView = LayoutInflater.from(parent.context).inflate(R.layout.list_item_timetable, parent, false)
-        return ItemViewHolder(rootView)
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TimeTableViewHolder {
+        val rootView = LayoutInflater.from(parent.context)
+            .inflate(R.layout.list_item_timetable, parent, false)
+        return TimeTableViewHolder(rootView)
     }
 
-    override fun onBindViewHolder(holder: ItemViewHolder, position: Int) {
-        holder.bindItems(freshList[position])
-    }
+    override fun onBindViewHolder(holder: TimeTableViewHolder, position: Int) =
+        holder.bind(freshList[position])
 
     override fun getItemCount() = freshList.size
-}
 
-class SaveAdpater : PagedListAdapter<FreshData, ItemViewHolder>(DIFF_CALLBACK) {
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemViewHolder {
-        val rootView = LayoutInflater.from(parent.context).inflate(R.layout.list_item_fresh, parent, false)
-        return ItemViewHolder(rootView)
-    }
-
-    override fun onBindViewHolder(holder: ItemViewHolder, position: Int) {
-        holder.bindItems(getItem(position))
-    }
-
-    companion object {
-        private val DIFF_CALLBACK = object : DiffUtil.ItemCallback<FreshData>() {
-            override fun areItemsTheSame(oldConcert: FreshData, newConcert: FreshData): Boolean =
-                oldConcert.id == newConcert.id
-
-            override fun areContentsTheSame(oldConcert: FreshData, newConcert: FreshData): Boolean =
-                oldConcert.id == newConcert.id
-        }
-    }
-}
-
-class ItemViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-
-    fun bindItems(fresh: FreshData?) {
-        fresh?.let {
+    class TimeTableViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        fun bind(fresh: FreshData) {
             itemView.txt_arrive_time.text = fresh.arrivetime
-            itemView.txt_subway_endName.text = fresh.subway_end_name+"행"
+            itemView.txt_subway_endName.text =
+                itemView.context.getString(R.string.bound_for, fresh.subway_end_name)
         }
     }
 }

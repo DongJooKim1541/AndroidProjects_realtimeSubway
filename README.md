@@ -2,72 +2,89 @@
 
 <img src="./ScreenShots/icon.jpg" width="20%">
 
-자주 이용하는 역을 등록하여 역에 대한 실시간 도착 정보, 시간표, 근처 버스 정류장, 출구 정보 등을 빠르게 이용할 수 있는 모바일 애플리케이션입니다.
+자주 이용하는 지하철역을 저장해 두고 도착 시간표, 첫차/막차, 주변 버스 정류장과 출구 정보를 빠르게 확인하는 Android 앱입니다.
 
-## 📋 프로젝트 정보
+- **과목**: 모바일 프로그래밍 (2021)
+- **언어**: Kotlin
+- **데이터**: [서울 열린데이터광장](https://data.seoul.go.kr) 지하철 시간표 API (`SearchSTNTimeTableByIDService`)
+- **지원 범위**: 2호선 20개 역 (강변 ~ 문래)
 
-- **과목**: 모바일 프로그래밍 수업 기말고사
-- **년도**: 2021학년도
-- **주요 기술**: Kotlin, MVVM 패턴, Room Database
+## 기능
 
-## 🛠 기술 스택
-
-| 기술 | 용도 |
+| 기능 | 설명 |
 |------|------|
-| **Kotlin** | 프로그래밍 언어 |
-| **MVVM** | 아키텍처 패턴 |
-| **Room** | 로컬 데이터베이스 |
-| **Retrofit** | HTTP 클라이언트 |
-| **Navigation** | Fragment 네비게이션 |
-| **LiveData** | 데이터 바인딩 |
+| 역 검색 | 역·요일(평일/토요일/일요일)·방향(상행/하행)을 선택해 조회 |
+| 도착 정보 | 지금 시각 기준으로 다가오는 열차 2편과 남은 시간 표시 |
+| 저장 | 조회 조건과 결과를 로컬 DB에 저장, 목록에서 다시 열람 |
+| 시간표 | 저장한 역의 전체 / 첫차 / 곧 도착 / 막차 시간표 전환 |
+| 주변 정보 | 네이버 지도로 역 주변 버스 노선·출구 정보 연결 |
 
-## 📱 주요 기능
+## 기술 스택
 
-1. **실시간 도착 정보**: 선택한 역의 실시간 열차 도착 예정 정보
-2. **역별 시간표**: 저장된 역의 요일별 시간표 조회
-3. **즐겨찾기**: 자주 이용하는 역 저장 및 관리
-4. **빠른 검색**: 지하철 역명으로 빠른 검색
+| 영역 | 사용 기술 |
+|------|-----------|
+| 언어 | Kotlin 1.3.71 |
+| 아키텍처 | MVVM (ViewModel + LiveData) |
+| 비동기 | Kotlin Coroutines (`viewModelScope`, `Dispatchers.IO`) |
+| 로컬 DB | Room 2.2.5 (suspend DAO) |
+| 목록 | RecyclerView + Paging 2 |
+| 화면 전환 | Navigation Component 2.2.2 |
+| 네트워크 | OkHttp `HttpUrl` + `DocumentBuilderFactory` XML 파싱 |
 
-## 📚 문서
+## 구조
 
-- [SDD (설계 문서)](docs/SDD.md)
-- [테스트 케이스](docs/TC.md)
-- [프로젝트 보고서](docs/project_report.md)
+```
+app/src/main/java/com/example/gc_last/
+├── data/        SubwayRepository — API 조회 및 XML 파싱 단일 진입점
+├── database/    DatabaseModule — Room 데이터베이스
+├── model/       FreshData, SaveItem, FreshDao, Subways, DayOfWeek
+├── network/     SubwayApi — 서울 열린데이터광장 URL 생성
+├── ui/          FreshAdapter, FreshPagedAdapter — 공용 목록 어댑터
+├── util/        TimeRemaining(남은 시간 계산), NavKeys(화면 간 Bundle 키)
+├── main/        MainActivity, SplashFragment
+├── search/      SearchFragment/ViewModel/Adapter — 검색 및 저장 목록
+├── result/      ResultFragment/ViewModel — 검색 결과
+└── local/       SaveFragment/ViewModel, SavedTimeTable* — 저장된 역 상세·시간표
+```
 
-## 📦 설치 및 실행
+데이터 흐름은 `Fragment → ViewModel → SubwayRepository → (Seoul OpenAPI | Room)` 한 방향입니다.
+네트워크 조회와 XML 파싱은 `SubwayRepository`에만 존재하고, ViewModel은 결과를 어떤 기준으로
+추릴지(전체 / 첫차 / 막차 / 다가오는 N편)만 결정합니다.
+
+## 빌드
 
 ### 요구사항
-- Android Studio 4.0+
-- Android SDK 29+
-- Kotlin 1.4+
 
-### 빌드 및 실행
+- Android Studio 4.0 이상
+- Android SDK 29, Build Tools 29.0.3
+- JDK 8
+
+### API 키 설정 (필수)
+
+인증키는 저장소에 포함하지 않습니다. [서울 열린데이터광장](https://data.seoul.go.kr/together/mypage/actKey.do)에서
+키를 발급받아 `local.properties`에 넣으세요.
+
+```properties
+SEOUL_OPENAPI_KEY=발급받은_키
+```
+
+`SEOUL_OPENAPI_KEY` 환경변수로도 읽습니다. `local.properties.sample`을 복사해 사용하면 됩니다.
+키가 비어 있으면 빌드는 되지만 시간표 조회가 실패합니다.
+
+### 실행
+
 ```bash
-# 프로젝트 클론
 git clone https://github.com/DongJooKim1541/AndroidProjects_realtimeSubway.git
-
-# Android Studio에서 열기
-android studio ./AndroidProjects_realtimeSubway
-
-# 앱 빌드 및 실행
+cd AndroidProjects_realtimeSubway
 ./gradlew assembleDebug
 ```
 
-## 📊 프로젝트 통계
+## 문서
 
-- 총 코드 라인: ~3,500 LOC
-- Fragment: 5개
-- ViewModel: 3개
-- 테스트 케이스: 37개 (100% 성공)
-- 호환성: Android 8.0 ~ 10.0
+- [설계 문서 (SDD)](docs/SDD.md) — 아키텍처, 데이터 모델, 화면 흐름
+- [테스트 케이스 (TC)](docs/TC.md) — 수동 검증 시나리오
+- [리팩토링 기록](docs/REFACTORING.md) — 정리 내역과 남은 과제
 
-## ✅ 테스트 결과
+## 라이선스
 
-- 기능 테스트: 37/37 성공 (100%)
-- 성능 테스트: 전체 통과
-- 호환성 테스트: API 26~29 지원
-- 보안 테스트: 통과
-
-## 📄 라이선스
-
-본 프로젝트는 교육 목적의 프로젝트입니다.
+[LICENSE](LICENSE) 참고.

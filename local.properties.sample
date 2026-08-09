@@ -1,0 +1,8 @@
+# local.properties 로 복사한 뒤 값을 채운다. (local.properties 는 git 에 올라가지 않는다)
+#
+# 서울 열린데이터광장에서 발급받은 인증키
+# https://data.seoul.go.kr/together/mypage/actKey.do
+SEOUL_OPENAPI_KEY=여기에_발급받은_키를_입력
+
+# Android Studio 가 자동으로 채우는 항목
+# sdk.dir=C\:\\Users\\<사용자>\\AppData\\Local\\Android\\Sdk

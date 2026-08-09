@@ -63,7 +63,7 @@
         <action
             android:id="@+id/action_global_searchFragment"
             app:destination="@id/searchFragment"
-            app:popUpTo="@id/searchFragment"
+            app:popUpTo="@id/splashFragment"
             app:popUpToInclusive="true"
             app:launchSingleTop="true" />
     </fragment>

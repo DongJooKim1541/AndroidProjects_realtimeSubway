@@ -3,117 +3,107 @@ package com.example.gc_last.local
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.Observer
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
-import androidx.paging.LivePagedListBuilder
-import androidx.paging.PagedList
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.gc_last.R
-import com.example.gc_last.database.DatabaseModule
 import com.example.gc_last.model.FreshData
 import com.example.gc_last.model.Subways
-import com.example.gc_last.result.SaveViewModel
-import com.example.gc_last.result.Save_Adpater
-import com.example.gc_last.result.Save_adapter
+import com.example.gc_last.ui.FreshAdapter
+import com.example.gc_last.ui.FreshPagedAdapter
+import com.example.gc_last.util.NavKeys
 import kotlinx.android.synthetic.main.fragment_save.*
 import kotlinx.android.synthetic.main.fragment_save.view.*
 
-//역 정보 저장소 화면 구현
+/** 저장된 역 상세 화면. 저장 당시 결과, 시간표, 주변 버스/출구 정보로 이동한다. */
 class SaveFragment : Fragment() {
 
-    val database by lazy {
-        DatabaseModule.getDatabase(requireContext())
+    private val saveViewModel by lazy {
+        ViewModelProvider(this).get(SaveViewModel::class.java)
     }
 
-    val saveViewModel by lazy {
-        ViewModelProvider(requireActivity()).get(SaveViewModel::class.java)
-    }
+    private val savedAdapter = FreshPagedAdapter()
+    private val refreshedAdapter = FreshAdapter()
 
-    val saveAdapter by lazy { Save_Adpater() }
-    val save_Adpater = Save_adapter()
-
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.fragment_save, container, false)
-    }
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? = inflater.inflate(R.layout.fragment_save, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        view.list_save.adapter = saveAdapter
+        val saveId = arguments?.getLong(NavKeys.SAVE_ID) ?: return
+
+        view.list_save.adapter = savedAdapter
         view.list_save.layoutManager = LinearLayoutManager(requireContext())
 
-        arguments?.getLong("SAVE_ID")?.let { saveId ->
+        saveViewModel.savedTrains(saveId).observe(viewLifecycleOwner) { savedAdapter.submitList(it) }
 
-            val selectSubway=database.freshDao().loadFreshSubwayData(saveId = (saveId*2)-1)
-            val selectDay=database.freshDao().loadFreshDayData(saveId = (saveId*2)-1)
-            val resultDirection=database.freshDao().loadFreshDirectionData(saveId = (saveId*2)-1)
-            val pageLiveData: LiveData<PagedList<FreshData>> = LivePagedListBuilder(database.freshDao().loadFreshData(saveId = saveId),20).build()
+        // 관찰자는 onViewCreated에서 한 번만 등록한다.
+        // 이전에는 새로고침 버튼을 누를 때마다 새 관찰자가 쌓였다.
+        saveViewModel.refreshed.observe(viewLifecycleOwner) { trains ->
+            refreshedAdapter.freshList = trains
+            view.list_save.adapter = refreshedAdapter
+        }
 
-            pageLiveData.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
+        saveViewModel.savedCondition.observe(viewLifecycleOwner) { condition ->
+            bindCondition(view, condition)
+        }
 
-                saveAdapter.submitList(it)
-                txt_subway_subwayStation.text=database.freshDao().loadFreshStationNameData(saveId = (saveId*2)-1)
-            })
-            //시간표
-            txt_subway_timetable.setOnClickListener {
+        saveViewModel.loadSavedCondition(saveId)
+    }
 
-                arguments?.getLong("SAVE_ID")?.let { saveId ->
+    private fun bindCondition(view: View, condition: FreshData?) {
+        if (condition == null) {
+            Toast.makeText(requireContext(), R.string.no_saved_condition, Toast.LENGTH_LONG).show()
+            return
+        }
 
-                    findNavController().navigate(
-                        R.id.action_saveFragment_to_savedTimeTableFragment,
-                        Bundle().apply {
-                            putString("SELECT_SUBWAY", selectSubway)
-                            putString("SELECT_DAY", selectDay)
-                            putString("RESULT_DIRECTION", resultDirection)
-                        })
+        val subway = condition.selectSubway ?: return
+        val day = condition.selectDay ?: return
+        val direction = condition.resultDirection ?: return
+        val stationName = Subways.valueOf(subway).holder
+
+        txt_subway_subwayStation.text = condition.station_name
+
+        txt_subway_timetable.setOnClickListener {
+            findNavController().navigate(
+                R.id.action_saveFragment_to_savedTimeTableFragment,
+                Bundle().apply {
+                    putString(NavKeys.SELECT_SUBWAY, subway)
+                    putString(NavKeys.SELECT_DAY, day)
+                    putString(NavKeys.RESULT_DIRECTION, direction)
                 }
-            }
-            //버스 정보
-            txt_subway_bus.setOnClickListener {
-                val intent= Intent(Intent.ACTION_VIEW, Uri.parse(
-                    "https://m.map.naver.com/bus/search.nhn?query=${ Subways.valueOf(selectSubway.toString()).holder}역+버스&tab=BUS_ROUTE&busType=&queryRank=1"))
-                Log.d("SaveFragment", "https://m.map.naver.com/search2/search.nhn?query=${ Subways.valueOf(selectSubway.toString()).holder}역%20출구&sm=shistory&style=v5")
-                startActivity(intent)
-            }
-            //지하철 출구 정보
-            txt_subway_exit_info.setOnClickListener {
-                val intent= Intent(Intent.ACTION_VIEW, Uri.parse(
-                    "https://m.map.naver.com/search2/search.nhn?query=${ Subways.valueOf(selectSubway.toString()).holder}역%20출구&sm=shistory&style=v5"))
-                Log.d("SaveFragment", "https://m.map.naver.com/search2/search.nhn?query=${ Subways.valueOf(selectSubway.toString()).holder}역%20출구&sm=shistory&style=v5")
-                startActivity(intent)
-            }
+            )
+        }
 
-            image_reset.setOnClickListener {
+        txt_subway_bus.setOnClickListener { openExternal(busSearchUrl(stationName)) }
+        txt_subway_exit_info.setOnClickListener { openExternal(exitSearchUrl(stationName)) }
 
-                arguments?.getLong("SAVE_ID")?.let { saveId ->
-
-                    if(selectSubway!=null && selectDay!=null && resultDirection!=null){
-
-                        saveViewModel.loadDataFromURL(selectSubway,selectDay, resultDirection)
-                        saveViewModel.transferData(selectSubway,selectDay, resultDirection)
-                        saveViewModel.resultList().observe(viewLifecycleOwner, Observer {
-
-                            save_Adpater.freshList = it
-                            save_Adpater.notifyDataSetChanged()
-                        })
-
-                        view.list_save.adapter = save_Adpater
-                        view.list_save.layoutManager = LinearLayoutManager(requireContext())
-                    }
-                    else{
-                        Toast.makeText(requireContext(), "해당되는 데이터가 없습니다!", Toast.LENGTH_LONG).show()
-                    }
-                }
-            }
+        image_reset.setOnClickListener {
+            view.list_save.layoutManager = LinearLayoutManager(requireContext())
+            saveViewModel.refresh(subway, day, direction)
         }
     }
-}
 
+    private fun openExternal(url: String) {
+        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+    }
+
+    private fun busSearchUrl(stationName: String) =
+        "$NAVER_MAP_BASE/bus/search.nhn?query=$stationName역+버스&tab=BUS_ROUTE&busType=&queryRank=1"
+
+    private fun exitSearchUrl(stationName: String) =
+        "$NAVER_MAP_BASE/search2/search.nhn?query=$stationName역%20출구&sm=shistory&style=v5"
+
+    companion object {
+        private const val NAVER_MAP_BASE = "https://m.map.naver.com"
+    }
+}
