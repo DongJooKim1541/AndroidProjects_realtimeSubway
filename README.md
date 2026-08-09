@@ -1,6 +1,6 @@
 # 실시간 지하철 도착 정보 앱
 
-<img src="./ScreenShots/icon.jpg" width="20%">
+<img src="./docs/images/icon.jpg" width="20%">
 
 자주 이용하는 지하철역을 저장해 두고 도착 시간표, 첫차/막차, 주변 버스 정류장과 출구 정보를 빠르게 확인하는 Android 앱입니다.
 
@@ -68,8 +68,7 @@ app/src/main/java/com/example/gc_last/
 SEOUL_OPENAPI_KEY=발급받은_키
 ```
 
-`SEOUL_OPENAPI_KEY` 환경변수로도 읽습니다. `local.properties.sample`을 복사해 사용하면 됩니다.
-키가 비어 있으면 빌드는 되지만 시간표 조회가 실패합니다.
+`SEOUL_OPENAPI_KEY` 환경변수로도 읽습니다. 키가 없으면 빌드는 되지만 조회 시 오류가 납니다.
 
 ### 실행
 
@@ -83,7 +82,6 @@ cd AndroidProjects_realtimeSubway
 
 - [설계 문서 (SDD)](docs/SDD.md) — 아키텍처, 데이터 모델, 화면 흐름
 - [테스트 케이스 (TC)](docs/TC.md) — 수동 검증 시나리오
-- [리팩토링 기록](docs/REFACTORING.md) — 정리 내역과 남은 과제
 
 ## 라이선스
 
