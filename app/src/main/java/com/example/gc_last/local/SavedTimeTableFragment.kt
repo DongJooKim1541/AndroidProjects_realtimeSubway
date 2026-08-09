@@ -49,6 +49,13 @@ class SavedTimeTableFragment : Fragment() {
             timeTableAdapter.freshList = trains
         }
 
+        timeTableViewModel.errorMessage.observe(viewLifecycleOwner) { message ->
+            message ?: return@observe
+            val text = message.ifBlank { getString(R.string.load_failed) }
+            Toast.makeText(requireContext(), text, Toast.LENGTH_LONG).show()
+            timeTableViewModel.clearErrorMessage()
+        }
+
         // 필터별로 같은 11줄이 네 번 복사되어 있던 부분.
         val filterButtons = mapOf(
             timetable_startSub to TimeTableFilter.FIRST,

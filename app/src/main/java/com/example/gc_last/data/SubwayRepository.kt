@@ -6,8 +6,13 @@ import com.example.gc_last.model.Subways
 import com.example.gc_last.network.SubwayApi
 import com.example.gc_last.util.TimeRemaining
 import com.example.gc_last.util.toKoreanRemaining
+import org.w3c.dom.Document
 import org.w3c.dom.Element
+import java.io.IOException
 import javax.xml.parsers.DocumentBuilderFactory
+
+/** 서울 열린데이터광장이 오류 코드를 돌려줬을 때 던진다. */
+class SubwayApiException(message: String) : IOException(message)
 
 /**
  * 지하철 시간표 조회 단일 진입점.
@@ -24,6 +29,12 @@ object SubwayRepository {
     private const val TAG_STATION_NAME = "STATION_NM"
     private const val TAG_ARRIVE_TIME = "ARRIVETIME"
     private const val TAG_END_STATION = "SUBWAYENAME"
+
+    private const val TAG_CODE = "CODE"
+    private const val TAG_MESSAGE = "MESSAGE"
+
+    /** 서울 열린데이터광장이 정상 응답에 쓰는 코드. 그 외는 오류다. */
+    private const val CODE_SUCCESS = "INFO-000"
 
     /**
      * 선택한 역/요일/방향의 전체 시간표를 반환한다.
@@ -45,9 +56,22 @@ object SubwayRepository {
         document.documentElement.normalize()
 
         val rows = document.getElementsByTagName(TAG_ROW)
+        if (rows.length == 0) {
+            // 인증키 오류 등은 <RESULT><CODE>INFO-100</CODE><MESSAGE>..</MESSAGE></RESULT> 로 온다.
+            // 이걸 걸러내지 않으면 결과가 조용히 0건이 되어 화면만 비어 보인다.
+            document.apiErrorMessage()?.let { throw SubwayApiException(it) }
+        }
+
         return (0 until rows.length)
             .mapNotNull { rows.item(it) as? Element }
             .map { it.toFreshData(subwayName, dayName, direction) }
+    }
+
+    private fun Document.apiErrorMessage(): String? {
+        val code = getElementsByTagName(TAG_CODE).item(0)?.textContent?.trim()
+        if (code.isNullOrEmpty() || code == CODE_SUCCESS) return null
+        val message = getElementsByTagName(TAG_MESSAGE).item(0)?.textContent?.trim()
+        return listOfNotNull(message?.takeIf { it.isNotEmpty() }, "($code)").joinToString(" ")
     }
 
     private fun Element.textOf(tag: String): String =

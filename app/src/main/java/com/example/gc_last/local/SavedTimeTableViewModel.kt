@@ -39,9 +39,19 @@ class SavedTimeTableViewModel : ViewModel() {
     private val _timeTable = MutableLiveData<List<FreshData>>()
     val timeTable: LiveData<List<FreshData>> = _timeTable
 
+    private val _errorMessage = MutableLiveData<String?>()
+
+    /** 조회 실패 사유. 성공 시 null. */
+    val errorMessage: LiveData<String?> = _errorMessage
+
     private val errorHandler = CoroutineExceptionHandler { _, throwable ->
         Log.e(TAG, throwable.message ?: throwable.javaClass.simpleName, throwable)
+        _errorMessage.postValue(throwable.message)
         _timeTable.postValue(emptyList())
+    }
+
+    fun clearErrorMessage() {
+        _errorMessage.value = null
     }
 
     fun load(subwayName: String, dayName: String, direction: String, filter: TimeTableFilter) {

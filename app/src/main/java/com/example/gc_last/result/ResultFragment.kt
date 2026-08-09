@@ -55,11 +55,11 @@ class ResultFragment : Fragment() {
             view.floting_save.visibility = View.VISIBLE
         }
 
-        // 이전에는 실패 시 로그만 남아 로딩 표시가 영원히 사라지지 않았다.
-        resultViewModel.loadFailed.observe(viewLifecycleOwner) { failed ->
-            if (failed) {
-                Toast.makeText(requireContext(), R.string.load_failed, Toast.LENGTH_LONG).show()
-            }
+        resultViewModel.errorMessage.observe(viewLifecycleOwner) { message ->
+            message ?: return@observe
+            val text = message.ifBlank { getString(R.string.load_failed) }
+            Toast.makeText(requireContext(), text, Toast.LENGTH_LONG).show()
+            resultViewModel.clearErrorMessage()
         }
 
         view.floting_save.setOnClickListener {
