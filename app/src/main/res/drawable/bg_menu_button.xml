@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 역 정보 화면 메뉴 버튼 배경. 예전에는 그림 자원을 늘려 쓰다가 잘려 보였다. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/app_surface" />
+    <corners android:radius="10dp" />
+    <stroke
+        android:width="1dp"
+        android:color="@color/app_accent" />
+</shape>

@@ -1,8 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  종이 노선도에서 가져온 아이보리 계열이다.
+  바탕은 아이보리로 두고, 배너·탭·버튼은 같은 계열에서 한 단계씩 진한 색으로 구분한다.
+  순백은 쓰지 않는다.
+-->
 <resources>
-    <color name="colorPrimary">#6200EE</color>
-    <color name="colorPrimaryDark">#3700B3</color>
-    <color name="colorAccent">#03DAC5</color>
+    <!-- 바탕. 노선도 영역만 한 톤 밝게 해서 별개의 면으로 보이게 한다. -->
+    <color name="app_background">#F1E9D7</color>
+    <color name="map_canvas">#FAF4E6</color>
 
-    <color name="primaryBlack">#373737</color>
+    <!-- 배너(액션바). 바탕과 같은 계열이지만 분명히 진하다. -->
+    <color name="app_primary">#C6B18A</color>
+    <color name="app_primary_dark">#A28F6B</color>
+
+    <!-- 탭·버튼 -->
+    <color name="app_surface">#E3D7BB</color>
+    <color name="app_surface_stroke">#B9A57F</color>
+
+    <!-- 강조. 지하철 표지판의 주황빛. -->
+    <color name="app_accent">#C0602A</color>
+
+    <!-- 글자 -->
+    <color name="text_primary">#2E2A21</color>
+    <color name="text_muted">#6E6553</color>
+    <color name="text_on_accent">#FAF4E6</color>
+
+    <!-- 노선도 -->
+    <color name="map_station_label">#241F16</color>
+    <color name="map_label_halo">#CCFAF4E6</color>
+
+    <!-- 단계별 안내 문구를 서로 구분하려고 색을 나눴다. -->
+    <color name="label_station">#B4551F</color>
+    <color name="label_day">#2F6F5E</color>
+    <color name="label_direction">#3F5390</color>
+
+    <!-- 이전 이름을 참조하는 곳이 남아 있어 유지한다. -->
+    <color name="colorPrimary">#C6B18A</color>
+    <color name="colorPrimaryDark">#A28F6B</color>
+    <color name="colorAccent">#C0602A</color>
+    <color name="primaryBlack">#2E2A21</color>
 </resources>

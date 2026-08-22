@@ -128,22 +128,14 @@ class SearchFragment : Fragment() {
             view.pane_map.visibility = if (showMap) View.VISIBLE else View.GONE
             view.list_search.visibility = if (showMap) View.GONE else View.VISIBLE
 
-            val active = ContextCompat.getColor(requireContext(), android.R.color.holo_green_dark)
-            val inactive = ContextCompat.getColor(requireContext(), android.R.color.darker_gray)
+            val active = ContextCompat.getColor(requireContext(), R.color.app_accent)
+            val inactive = ContextCompat.getColor(requireContext(), R.color.app_surface)
             view.tab_map.setBackgroundColor(if (showMap) active else inactive)
             view.tab_saved.setBackgroundColor(if (showMap) inactive else active)
-            view.tab_map.setTextColor(
-                ContextCompat.getColor(
-                    requireContext(),
-                    if (showMap) android.R.color.white else android.R.color.black
-                )
-            )
-            view.tab_saved.setTextColor(
-                ContextCompat.getColor(
-                    requireContext(),
-                    if (showMap) android.R.color.black else android.R.color.white
-                )
-            )
+            val onActive = ContextCompat.getColor(requireContext(), R.color.text_on_accent)
+            val onInactive = ContextCompat.getColor(requireContext(), R.color.text_primary)
+            view.tab_map.setTextColor(if (showMap) onActive else onInactive)
+            view.tab_saved.setTextColor(if (showMap) onInactive else onActive)
         }
 
         view.tab_map.setOnClickListener { select(true) }
@@ -194,8 +186,8 @@ class SearchFragment : Fragment() {
      */
     private fun updateSearchButtonState() {
         val ready = selectedStation != null && selectedDay != null
-        val background = if (ready) android.R.color.holo_green_dark else android.R.color.darker_gray
-        val text = if (ready) android.R.color.white else android.R.color.black
+        val background = if (ready) R.color.app_accent else R.color.app_surface
+        val text = if (ready) R.color.text_on_accent else R.color.text_muted
 
         btn_search.setBackgroundColor(ContextCompat.getColor(requireContext(), background))
         btn_search.setTextColor(ContextCompat.getColor(requireContext(), text))

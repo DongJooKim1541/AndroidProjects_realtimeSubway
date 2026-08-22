@@ -1,104 +1,87 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  저장 목록 한 줄.
+
+  예전에는 배경·배지·삭제 테두리가 한 장의 그림(line2.jpg)에 함께 그려져 있었다.
+  그림을 줄 크기에 맞춰 늘리다 보니 안의 원이 타원으로 찌그러졌고, 그림 위에 글자를
+  얹느라 위치도 어긋났다. 배경은 도형으로, 배지와 삭제 버튼은 정사각형 뷰로 바꿨다.
+-->
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="120dp"
-    android:orientation="vertical">
+    android:layout_height="wrap_content"
+    android:layout_marginStart="8dp"
+    android:layout_marginTop="6dp"
+    android:layout_marginEnd="8dp"
+    android:layout_marginBottom="6dp"
+    android:background="@drawable/bg_save_row"
+    android:paddingTop="12dp"
+    android:paddingBottom="12dp">
 
-    <!-- 호선 배지. 아래 행 그림(save_row_chrome)의 뚫린 자리로 이 색이 보인다.
-         예전에는 그림 자체에 2호선 초록 원이 박혀 있어 어느 호선을 저장해도 초록이었다.
-         그림에서 원을 지우고, 색은 코드에서 노선색으로 칠한다. -->
+    <!-- 호선 배지. 크기를 정사각형으로 못 박아 항상 정확한 원이 된다.
+         색은 SearchAdapter 가 노선색으로 칠한다. -->
     <ImageView
         android:id="@+id/img_line_badge"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_width="62dp"
+        android:layout_height="62dp"
+        android:layout_marginStart="14dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintDimensionRatio="1:1"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0388"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.52"
-        app:layout_constraintWidth_percent="0.20" />
-
-    <!-- scaleType 을 fitXY 로 두어야 그림이 뷰 영역에 그대로 맞고,
-         위 배지의 위치 비율(0.131, 0.508)이 어긋나지 않는다. -->
-    <ImageView
-        android:id="@+id/imageView"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:scaleType="fitXY"
-        android:src="@drawable/save_row_chrome"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/txt_subway_name"
-        android:layout_width="147dp"
-        android:layout_height="39dp"
-        android:gravity="center"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        android:textColor="@android:color/background_light"
-        android:textSize="20dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.498"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:gravity="center"
-        tools:textStyle="bold" />
-
-    <ImageView
-        android:id="@+id/btn_delete"
-        android:layout_width="45dp"
-        android:layout_height="45dp"
-        android:layout_marginEnd="41dp"
-        android:src="@drawable/ic_delete_35dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/txt_subway_line_num"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.504" />
+        android:id="@+id/txt_subway_line_num"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/text_on_accent"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="@+id/img_line_badge"
+        app:layout_constraintEnd_toEndOf="@+id/img_line_badge"
+        app:layout_constraintStart_toStartOf="@+id/img_line_badge"
+        app:layout_constraintTop_toTopOf="@+id/img_line_badge" />
 
     <TextView
-        android:id="@+id/txt_subway_line_num"
-        android:layout_width="46dp"
-        android:layout_height="19dp"
-        android:layout_marginStart="46dp"
-        android:layout_marginEnd="256dp"
-        android:textColor="@android:color/background_light"
-        android:textSize="16dp"
+        android:id="@+id/txt_subway_name"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="12dp"
+        android:textColor="@color/text_primary"
+        android:textSize="21sp"
         android:textStyle="bold"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/btn_delete"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.503"
-        tools:textStyle="bold" />
+        app:layout_constraintStart_toEndOf="@+id/img_line_badge"
+        app:layout_constraintTop_toTopOf="@+id/img_line_badge" />
+
+    <TextView
+        android:id="@+id/txt_subway_days"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/text_muted"
+        android:textSize="14sp"
+        app:layout_constraintStart_toStartOf="@+id/txt_subway_name"
+        app:layout_constraintTop_toBottomOf="@+id/txt_subway_name" />
 
     <TextView
         android:id="@+id/txt_subway_direction"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:layout_marginEnd="120dp"
-        android:text="상행"
-        android:textColor="@color/cardview_light_background"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:layout_marginStart="10dp"
+        android:textColor="@color/text_muted"
+        android:textSize="14sp"
+        app:layout_constraintStart_toEndOf="@+id/txt_subway_days"
+        app:layout_constraintTop_toTopOf="@+id/txt_subway_days" />
 
-    <TextView
-        android:id="@+id/txt_subway_days"
-        android:layout_width="wrap_content"
-        android:layout_height="0dp"
-        android:layout_marginStart="120dp"
-        android:layout_marginTop="12dp"
-        android:text="평일"
-        android:textColor="@color/cardview_light_background"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+    <ImageView
+        android:id="@+id/btn_delete"
+        android:layout_width="46dp"
+        android:layout_height="46dp"
+        android:layout_marginEnd="16dp"
+        android:background="@drawable/bg_circle_stroke"
+        android:padding="9dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/ic_delete_35dp" />
 </androidx.constraintlayout.widget.ConstraintLayout>

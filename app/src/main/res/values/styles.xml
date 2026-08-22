@@ -1,17 +1,57 @@
 <resources>
-    <!-- Base application theme. -->
+
+    <!--
+      앱 테마.
+
+      windowBackground 을 지정하지 않으면 앱을 열 때 시스템 기본(밝은) 배경이 한순간
+      보이면서 화면 테두리처럼 밝은 선이 남는다. 배경을 어둡게 못 박아 그걸 없앤다.
+      액션바 그림자(elevation)와 windowContentOverlay 도 껐다.
+    -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-        <!-- Customize your theme here. -->
-        <item name="colorPrimary">#605371</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="colorAccent">@color/colorAccent</item>
+        <item name="colorPrimary">@color/app_primary</item>
+        <item name="colorPrimaryDark">@color/app_primary_dark</item>
+        <item name="colorAccent">@color/app_accent</item>
+
+        <item name="android:windowBackground">@color/app_background</item>
+        <item name="android:colorBackground">@color/app_background</item>
+        <item name="android:textColorPrimary">@color/text_primary</item>
+        <item name="android:textColorSecondary">@color/text_muted</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:statusBarColor">@color/app_primary_dark</item>
+
+        <item name="actionBarStyle">@style/AppActionBar</item>
+        <item name="android:actionBarStyle">@style/AppActionBar</item>
+    </style>
+
+    <!-- 액션바. 그림자를 없애 화면 위쪽에 선이 생기지 않게 한다. -->
+    <style name="AppActionBar" parent="Widget.AppCompat.ActionBar.Solid">
+        <item name="background">@color/app_primary</item>
+        <item name="android:background">@color/app_primary</item>
+        <item name="elevation">0dp</item>
+        <item name="android:elevation">0dp</item>
+        <item name="titleTextStyle">@style/AppActionBarTitle</item>
+        <item name="android:titleTextStyle">@style/AppActionBarTitle</item>
+    </style>
+
+    <style name="AppActionBarTitle" parent="TextAppearance.AppCompat.Widget.ActionBar.Title">
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textStyle">bold</item>
     </style>
 
     <style name="AppTheme.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
     </style>
-    <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar"/>
-    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light"/>
+    <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 
+    <!-- 역 정보 화면의 버스·시간표·출구 정보 버튼. -->
+    <style name="MenuButton">
+        <item name="android:background">@drawable/bg_menu_button</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textSize">17sp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:paddingStart">18dp</item>
+        <item name="android:paddingEnd">18dp</item>
+    </style>
 </resources>

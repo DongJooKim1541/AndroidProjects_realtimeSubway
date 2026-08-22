@@ -9,6 +9,8 @@ import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import android.view.View
+import androidx.core.content.ContextCompat
+import com.example.gc_last.R
 import com.example.gc_last.model.Station
 import com.example.gc_last.model.StationCatalog
 import com.example.gc_last.model.SubwayLine
@@ -52,11 +54,15 @@ class SubwayNetworkMapView @JvmOverloads constructor(
     private val lines: List<SubwayLine> =
         SubwayLine.values().filter { StationCatalog.of(it).any { s -> s.lat != null } }
 
-    /** 좌표가 있는 역만 그린다. 없는 역은 위치를 만들어낼 수 없다. */
+    /** 그릴 수 있는 역의 위치. 좌표가 없고 같은 이름의 역도 없으면 빠진다. */
     private val placed: Map<String, Point>
+
+    /** 노선별로 이어 그릴 연결. 역번호가 아니라 좌표에서 계산한다([LineTopology]). */
+    private val edgesByLine: Map<SubwayLine, List<LineTopology.Edge>>
 
     private val worldWidth: Float
     private val worldHeight: Float
+
 
     /** 화면에 꽉 차게 맞추는 배율. 확대 배율 1 이 이 상태다. */
     private var fitScale = 1f
@@ -65,23 +71,43 @@ class SubwayNetworkMapView @JvmOverloads constructor(
     private var zoom = 1f
 
     init {
-        val withCoords = StationCatalog.stations.filter { it.lat != null && it.lon != null }
-        val minLat = withCoords.minOf { it.lat!! }
-        val maxLat = withCoords.maxOf { it.lat!! }
-        val minLon = withCoords.minOf { it.lon!! }
-        val maxLon = withCoords.maxOf { it.lon!! }
-        // 위도 1도와 경도 1도의 실제 길이가 달라 그냥 쓰면 가로로 늘어난다. 중간 위도의
-        // 코사인을 곱해 보정한다.
+        // 좌표가 없는 역이 31개 있다. 같은 이름의 역이 다른 노선에 있으면(= 환승역)
+        // 그 좌표를 빌려 쓴다. 그러면 수인분당선 오이도·한대앞처럼 4호선과 같은 자리를
+        // 쓰는 구간이 끊기지 않는다. 이름이 같은 역이 아예 없으면 위치를 만들어낼 수
+        // 없으므로 그리지 않는다(잇지도 않는다).
+        val fallback = StationCatalog.stations
+            .filter { it.lat != null && it.lon != null }
+            .associateBy({ it.name }, { it.lat!! to it.lon!! })
+
+        val located = StationCatalog.stations.mapNotNull { station ->
+            val point = station.lat?.let { lat -> station.lon?.let { lon -> lat to lon } }
+                ?: fallback[station.name]
+            point?.let { station to it }
+        }
+
+        val minLat = located.minOf { it.second.first }
+        val maxLat = located.maxOf { it.second.first }
+        val minLon = located.minOf { it.second.second }
+        val maxLon = located.maxOf { it.second.second }
+        // 위도 1도와 경도 1도의 실제 길이가 달라 그냥 쓰면 가로로 늘어난다.
         val lonScale = cos(Math.toRadians((minLat + maxLat) / 2))
 
-        placed = withCoords.associate { s ->
-            s.code to Point(
-                ((s.lon!! - minLon) * lonScale).toFloat(),
-                (maxLat - s.lat!!).toFloat()
+        placed = located.associate { (station, p) ->
+            station.code to Point(
+                ((p.second - minLon) * lonScale).toFloat(),
+                (maxLat - p.first).toFloat()
             )
         }
         worldWidth = ((maxLon - minLon) * lonScale).toFloat()
         worldHeight = (maxLat - minLat).toFloat()
+
+        edgesByLine = lines.associateWith { line ->
+            val drawable = StationCatalog.of(line).filter { placed.containsKey(it.code) }
+            LineTopology.edgesOf(drawable) { station ->
+                val p = placed.getValue(station.code)
+                p.x to p.y
+            }
+        }
     }
 
     private val linePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -92,13 +118,25 @@ class SubwayNetworkMapView @JvmOverloads constructor(
     private val dotFillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
     private val dotStrokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
     private val namePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.WHITE
+        color = ContextCompat.getColor(context, R.color.map_station_label)
         textAlign = Paint.Align.CENTER
     }
+
+    /**
+     * 글자 테두리.
+     *
+     * 배경이 노선으로 복잡해 글자만 그리면 선 위에서 읽기 어렵다. 캔버스가 밝은
+     * 아이보리라 테두리도 밝은 색을 쓴다(예전 어두운 배경에서는 검정이었다).
+     */
     private val nameShadowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#B3000000")
+        color = ContextCompat.getColor(context, R.color.map_label_halo)
         textAlign = Paint.Align.CENTER
         style = Paint.Style.STROKE
+    }
+
+    /** 종이 노선도처럼 밝은 바탕. 노선색이 선명하게 보인다. */
+    private val canvasPaint = Paint().apply {
+        color = ContextCompat.getColor(context, R.color.map_canvas)
     }
 
     private val scaleDetector = ScaleGestureDetector(
@@ -143,11 +181,9 @@ class SubwayNetworkMapView @JvmOverloads constructor(
     private fun screenX(p: Point) = p.x * fitScale * zoom + offsetX
     private fun screenY(p: Point) = p.y * fitScale * zoom + offsetY
 
-    /** 두 역이 몇 km 떨어져 있는지. 지선 건너뛰기를 걸러내는 데 쓴다. */
-    private fun distanceKm(a: Point, b: Point): Float =
-        hypot((a.x - b.x).toDouble(), (a.y - b.y).toDouble()).toFloat() * DEGREE_KM
 
     override fun onDraw(canvas: Canvas) {
+        canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), canvasPaint)
         linePaint.strokeWidth = dp(1.6f) * zoom.coerceIn(1f, 2.6f)
 
         // 미지원 노선을 먼저 그려 지원 노선이 위에 오게 한다.
@@ -175,13 +211,11 @@ class SubwayNetworkMapView @JvmOverloads constructor(
 
         val candidates = StationCatalog.stations
             .filter { placed.containsKey(it.code) }
-            .sortedByDescending { station ->
-                when {
-                    station.code == selected?.code -> 2
-                    StationCatalog.transfersOf(station).isNotEmpty() -> 1
-                    else -> 0
-                }
-            }
+            // 고른 역은 drawSelected 가 더 크게 따로 쓴다. 여기서 또 쓰면 두 글자가
+            // 겹쳐 뭉개진다.
+            .filterNot { it.code == selected?.code }
+            // 자리를 먼저 차지할 순서. 환승역이 우선이다.
+            .sortedByDescending { if (StationCatalog.transfersOf(it).isNotEmpty()) 1 else 0 }
 
         candidates.forEach { station ->
             val p = placed[station.code] ?: return@forEach
@@ -205,24 +239,13 @@ class SubwayNetworkMapView @JvmOverloads constructor(
     }
 
     private fun drawLine(canvas: Canvas, line: SubwayLine) {
-        val pts = StationCatalog.of(line).mapNotNull { placed[it.code] }
-        if (pts.size < 2) return
-
         linePaint.color = Color.parseColor(line.color)
         linePaint.alpha = if (line.timeTableSupported) 255 else DIM_ALPHA
 
-        pts.zipWithNext { a, b ->
-            // 지선으로 건너뛰는 구간은 잇지 않는다. 실제로 선로가 이어지지 않는다.
-            if (distanceKm(a, b) <= BREAK_KM) {
-                canvas.drawLine(screenX(a), screenY(a), screenX(b), screenY(b), linePaint)
-            }
-        }
-
-        // 순환선은 끝과 처음을 이어야 고리가 닫힌다.
-        val first = pts.first()
-        val last = pts.last()
-        if (distanceKm(first, last) <= LOOP_CLOSE_KM) {
-            canvas.drawLine(screenX(first), screenY(first), screenX(last), screenY(last), linePaint)
+        edgesByLine[line]?.forEach { edge ->
+            val a = placed[edge.from.code] ?: return@forEach
+            val b = placed[edge.to.code] ?: return@forEach
+            canvas.drawLine(screenX(a), screenY(a), screenX(b), screenY(b), linePaint)
         }
     }
 
@@ -239,7 +262,7 @@ class SubwayNetworkMapView @JvmOverloads constructor(
             val transfer = markTransfers && StationCatalog.transfersOf(station).isNotEmpty()
             val radius = (if (transfer) dp(2.4f) else dp(1.4f)) * zoom.coerceIn(1f, 3.2f)
 
-            dotFillPaint.color = if (transfer) Color.WHITE else color
+            dotFillPaint.color = if (transfer) canvasPaint.color else color
             dotFillPaint.alpha = alpha
             canvas.drawCircle(screenX(p), screenY(p), radius, dotFillPaint)
 
@@ -403,15 +426,6 @@ class SubwayNetworkMapView @JvmOverloads constructor(
 
         /** 화면에 맞출 때 남기는 여백 비율. */
         const val FIT_MARGIN = 0.94f
-
-        /** 좌표 1도를 km 로 어림한 값. 지선 건너뛰기를 판단할 때만 쓴다. */
-        const val DEGREE_KM = 111f
-
-        /** 이보다 멀면 선로가 이어지지 않는 것으로 본다. */
-        const val BREAK_KM = 6f
-
-        /** 첫 역과 마지막 역이 이 안에 있으면 순환선으로 보고 고리를 닫는다. */
-        const val LOOP_CLOSE_KM = 2f
 
         /** 시간표를 제공하지 않는 노선을 흐리게 하는 정도. */
         const val DIM_ALPHA = 70

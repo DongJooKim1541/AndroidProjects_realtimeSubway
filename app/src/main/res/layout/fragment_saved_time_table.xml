@@ -15,7 +15,7 @@
         android:gravity="center"
         android:text="종 점"
         android:textAppearance="@style/TextAppearance.AppCompat.Large"
-        android:textColor="@color/cardview_light_background"
+        android:textColor="@color/text_primary"
         android:textStyle="bold"
         app:layout_constraintBottom_toTopOf="@+id/timetable_radio_group"
         app:layout_constraintEnd_toStartOf="@+id/textView2"
@@ -33,7 +33,7 @@
         android:gravity="center"
         android:text="도착 시간"
         android:textAppearance="@style/TextAppearance.AppCompat.Large"
-        android:textColor="@color/cardview_light_background"
+        android:textColor="@color/text_primary"
         android:textStyle="bold"
         app:layout_constraintBottom_toTopOf="@+id/timetable_radio_group"
         app:layout_constraintEnd_toEndOf="parent"
@@ -62,10 +62,10 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_weight="1"
-            android:buttonTint="@color/cardview_light_background"
+            android:buttonTint="@color/app_accent"
             android:gravity="center"
             android:text="첫차"
-            android:textColor="@color/cardview_light_background"
+            android:textColor="@color/text_primary"
             tools:gravity="center" />
 
         <RadioButton
@@ -74,10 +74,10 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_weight="1"
-            android:buttonTint="@color/cardview_light_background"
+            android:buttonTint="@color/app_accent"
             android:gravity="center"
             android:text="곧 도착"
-            android:textColor="@color/cardview_light_background"
+            android:textColor="@color/text_primary"
             tools:gravity="center" />
 
         <RadioButton
@@ -86,10 +86,10 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_weight="1"
-            android:buttonTint="@color/cardview_light_background"
+            android:buttonTint="@color/app_accent"
             android:gravity="center"
             android:text="막차"
-            android:textColor="@color/cardview_light_background"
+            android:textColor="@color/text_primary"
             tools:gravity="center" />
 
         <RadioButton
@@ -97,10 +97,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:buttonTint="@color/cardview_light_background"
+            android:buttonTint="@color/app_accent"
             android:gravity="center"
             android:text="전체"
-            android:textColor="@color/cardview_light_background" />
+            android:textColor="@color/text_primary" />
     </RadioGroup>
 
     <androidx.recyclerview.widget.RecyclerView
@@ -108,7 +108,7 @@
         android:layout_width="402dp"
         android:layout_height="0dp"
         android:layout_marginTop="140dp"
-        android:background="#413752"
+        android:background="@color/app_background"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.444"

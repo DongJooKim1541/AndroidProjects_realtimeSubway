@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">가즈아 ☞</string>
+    <string name="app_name">가즈아</string>
 
     <!-- 목록 항목 -->
     <string name="arrives_in">%1$s 뒤 도착</string>

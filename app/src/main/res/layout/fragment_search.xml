@@ -7,7 +7,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#413752"
+    android:background="@color/app_background"
     android:orientation="vertical">
 
     <!-- 탭. material 의존성이 없어 TabLayout 대신 버튼 두 개로 만든다. -->
@@ -47,8 +47,9 @@
         android:layout_marginStart="12dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="12dp"
-        android:text="지하철역을 선택하세요. (두 손가락으로 확대, 끌어서 이동)"
-        android:textColor="@android:color/white"
+        android:text="지하철역"
+        android:textColor="@color/text_primary"
+        android:textStyle="bold"
         android:textSize="17sp" />
 
     <!-- 노선도는 스스로 확대·이동을 처리한다. 스크롤 뷰로 감싸면 두 손가락 확대를
@@ -107,9 +108,10 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
         android:layout_marginTop="6dp"
-        android:text="날짜를 선택하세요."
-        android:textColor="@android:color/white"
-        android:textSize="14sp" />
+        android:text="날짜"
+        android:textColor="@color/text_primary"
+        android:textSize="14sp"
+        android:textStyle="bold" />
 
     <RadioGroup
         android:id="@+id/radio_day"
@@ -123,10 +125,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:buttonTint="@color/cardview_light_background"
+            android:buttonTint="@color/app_accent"
             android:tag="평일"
             android:text="평일"
-            android:textColor="@color/cardview_light_background"
+            android:textColor="@color/text_primary"
             android:textSize="16sp" />
 
         <RadioButton
@@ -134,10 +136,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:buttonTint="@color/cardview_light_background"
+            android:buttonTint="@color/app_accent"
             android:tag="토요일"
             android:text="토요일"
-            android:textColor="@color/cardview_light_background"
+            android:textColor="@color/text_primary"
             android:textSize="16sp" />
 
         <RadioButton
@@ -145,12 +147,23 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:buttonTint="@color/cardview_light_background"
+            android:buttonTint="@color/app_accent"
             android:tag="일요일"
             android:text="일요일"
-            android:textColor="@color/cardview_light_background"
+            android:textColor="@color/text_primary"
             android:textSize="16sp" />
     </RadioGroup>
+
+    <TextView
+        android:id="@+id/txt_direction_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="2dp"
+        android:text="방향"
+        android:textColor="@color/text_primary"
+        android:textSize="14sp"
+        android:textStyle="bold" />
 
     <RadioGroup
         android:id="@+id/radio_layout"
@@ -165,10 +178,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:buttonTint="@color/cardview_light_background"
+            android:buttonTint="@color/app_accent"
             android:tag="1"
             android:text="상행"
-            android:textColor="@color/cardview_light_background"
+            android:textColor="@color/text_primary"
             android:textSize="16sp" />
 
         <RadioButton
@@ -176,10 +189,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:buttonTint="@color/cardview_light_background"
+            android:buttonTint="@color/app_accent"
             android:tag="2"
             android:text="하행"
-            android:textColor="@color/cardview_light_background"
+            android:textColor="@color/text_primary"
             android:textSize="16sp" />
     </RadioGroup>
 
