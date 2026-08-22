@@ -1,5 +1,7 @@
 package com.example.gc_last.search
 
+import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -10,6 +12,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.example.gc_last.R
 import com.example.gc_last.model.SaveItem
+import com.example.gc_last.model.SubwayLine
 import com.example.gc_last.util.NavKeys
 import kotlinx.android.synthetic.main.list_item_saveitem.view.*
 
@@ -40,7 +43,9 @@ class SearchAdapter(
 
             // API가 "02호선"처럼 호선 앞에 0을 붙여 내려준다. 이전 구현은 replace("0","")라
             // "10호선"이 "1호선"이 되는 문제가 있었다.
-            itemView.txt_subway_line_num.text = saveItem.saveSubwayLineNum.removePrefix("0")
+            val lineLabel = saveItem.saveSubwayLineNum.removePrefix("0")
+            itemView.txt_subway_line_num.text = lineLabel
+            applyLineColor(itemView, SubwayLine.of(lineLabel))
             itemView.txt_subway_name.text = saveItem.saveTitle
             itemView.txt_subway_days.text = saveItem.saveSubwayDays
             itemView.txt_subway_direction.text = saveItem.saveSubwayDirection
@@ -61,7 +66,27 @@ class SearchAdapter(
         }
     }
 
+    /**
+     * 호선 배지를 노선색으로 칠한다.
+     *
+     * 행 그림에는 2호선 초록 원이 박혀 있어 어느 호선을 저장해도 초록으로 보였다.
+     * 그림에서 원을 지우고(`save_row_chrome`), 그 자리에 놓인 [R.id.img_line_badge] 를
+     * 노선색으로 칠한다.
+     */
+    private fun applyLineColor(itemView: View, line: SubwayLine?) {
+        val color = line?.let { Color.parseColor(it.color) } ?: DEFAULT_BADGE_COLOR
+        itemView.img_line_badge.setImageDrawable(
+            GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(color)
+            }
+        )
+    }
+
     companion object {
+        /** 노선을 알 수 없을 때 쓰는 배지 색. */
+        private val DEFAULT_BADGE_COLOR = Color.parseColor("#8A80A0")
+
         private val DIFF_CALLBACK = object : DiffUtil.ItemCallback<SaveItem>() {
             override fun areItemsTheSame(oldItem: SaveItem, newItem: SaveItem) =
                 oldItem.id == newItem.id

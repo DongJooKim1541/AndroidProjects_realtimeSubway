@@ -61,6 +61,18 @@ enum class SubwayLine(
     INCHEON_2("인천2호선", "#ED8B00", false),
     GTX_A("GTX-A", "#9A6292", false),
     ;
+
+    companion object {
+        /**
+         * 표시 이름으로 노선을 찾는다. 저장된 항목은 API 응답의 `LINE_NUM`("02호선")을
+         * 그대로 담고 있어, 앞의 0을 떼면 [label]과 같아진다.
+         */
+        fun of(label: String?): SubwayLine? {
+            label ?: return null
+            val normalized = label.trim().removePrefix("0")
+            return values().firstOrNull { it.label == normalized }
+        }
+    }
 }
 
 object StationCatalog {

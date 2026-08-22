@@ -57,6 +57,8 @@ class SearchFragment : Fragment() {
         view.list_search.layoutManager = LinearLayoutManager(requireContext())
         searchViewModel.savedItems.observe(viewLifecycleOwner) { searchAdapter.submitList(it) }
 
+        setUpTabs(view)
+
         view.btn_search.setOnClickListener { onSearchClicked(view) }
 
         // requireActivity() 대신 viewLifecycleOwner에 묶어 화면이 사라질 때 콜백이 해제되도록 한다.
@@ -113,6 +115,40 @@ class SearchFragment : Fragment() {
             txt_weekday.text = getString(R.string.selected_day, tag)
             updateSearchButtonState()
         }
+    }
+
+    /**
+     * 노선도와 저장 목록을 탭으로 나눈다.
+     *
+     * 저장 목록을 노선도 아래에 함께 두면 노선도가 그만큼 가려진다. 지도는 넓어야 쓸 수
+     * 있으므로 화면을 나눠 번갈아 보여준다.
+     */
+    private fun setUpTabs(view: View) {
+        fun select(showMap: Boolean) {
+            view.pane_map.visibility = if (showMap) View.VISIBLE else View.GONE
+            view.list_search.visibility = if (showMap) View.GONE else View.VISIBLE
+
+            val active = ContextCompat.getColor(requireContext(), android.R.color.holo_green_dark)
+            val inactive = ContextCompat.getColor(requireContext(), android.R.color.darker_gray)
+            view.tab_map.setBackgroundColor(if (showMap) active else inactive)
+            view.tab_saved.setBackgroundColor(if (showMap) inactive else active)
+            view.tab_map.setTextColor(
+                ContextCompat.getColor(
+                    requireContext(),
+                    if (showMap) android.R.color.white else android.R.color.black
+                )
+            )
+            view.tab_saved.setTextColor(
+                ContextCompat.getColor(
+                    requireContext(),
+                    if (showMap) android.R.color.black else android.R.color.white
+                )
+            )
+        }
+
+        view.tab_map.setOnClickListener { select(true) }
+        view.tab_saved.setOnClickListener { select(false) }
+        select(true)
     }
 
     private fun onSearchClicked(view: View) {
