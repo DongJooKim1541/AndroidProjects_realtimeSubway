@@ -15,6 +15,7 @@ import com.example.gc_last.R
 import com.example.gc_last.model.FreshData
 import com.example.gc_last.model.StationCatalog
 import com.example.gc_last.ui.FreshAdapter
+import com.example.gc_last.ui.LineColors
 import com.example.gc_last.ui.FreshPagedAdapter
 import com.example.gc_last.util.NavKeys
 import kotlinx.android.synthetic.main.fragment_save.*
@@ -72,6 +73,12 @@ class SaveFragment : Fragment() {
         val stationName = StationCatalog.resolve(subway)?.name.orEmpty()
 
         txt_subway_subwayStation.text = condition.station_name
+
+        // 저장 목록에서 들어온 화면도 노선색을 따른다. 예전에는 그림 자원이 2호선 초록으로
+        // 고정되어 어느 호선을 저장해도 초록 원이 나왔다.
+        val line = StationCatalog.resolve(subway)?.line
+        LineColors.applyRing(view.img_subway_linenum, line)
+        LineColors.applyBackground(view, line)
 
         txt_subway_timetable.setOnClickListener {
             findNavController().navigate(

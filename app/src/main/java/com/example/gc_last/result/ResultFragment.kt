@@ -1,7 +1,5 @@
 package com.example.gc_last.result
 
-import android.graphics.Color
-import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -12,9 +10,9 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.gc_last.R
 import com.example.gc_last.model.StationCatalog
-import com.example.gc_last.model.SubwayLine
 import com.example.gc_last.network.SubwayApi
 import com.example.gc_last.ui.FreshAdapter
+import com.example.gc_last.ui.LineColors
 import com.example.gc_last.util.NavKeys
 import kotlinx.android.synthetic.main.fragment_result.*
 import kotlinx.android.synthetic.main.fragment_result.view.*
@@ -53,7 +51,8 @@ class ResultFragment : Fragment() {
 
         val station = StationCatalog.resolve(selectSubway)
         txt_subway_subwayStation.text = station?.name.orEmpty()
-        applyLineColor(view, station?.line)
+        LineColors.applyRing(view.img_subway_linenum, station?.line)
+        LineColors.applyBackground(view, station?.line)
 
         resultViewModel.timeTable.observe(viewLifecycleOwner) { trains ->
             resultAdapter.freshList = trains
@@ -74,34 +73,6 @@ class ResultFragment : Fragment() {
 
         resultViewModel.load(selectSubway, selectDay, resultDirection)
     }
-
-    /**
-     * 화면을 해당 노선색으로 물들인다.
-     *
-     * 어느 노선의 결과인지 제목만으로는 알기 어렵다. 역 이름을 감싸는 원은 노선색 테두리로,
-     * 배경은 노선색을 어둡게 섞은 색으로 칠한다. 원은 그림 자원 대신 [GradientDrawable] 로
-     * 그린다. 자원 색을 덧칠하면 가운데 흰 부분까지 물들기 때문이다.
-     */
-    private fun applyLineColor(view: View, line: SubwayLine?) {
-        line ?: return
-        val color = Color.parseColor(line.color)
-
-        view.img_subway_linenum.setImageDrawable(
-            GradientDrawable().apply {
-                shape = GradientDrawable.OVAL
-                setColor(Color.WHITE)
-                setStroke((RING_WIDTH_DP * resources.displayMetrics.density).toInt(), color)
-            }
-        )
-        view.setBackgroundColor(darken(color))
-    }
-
-    /** 노선색을 배경으로 쓸 수 있을 만큼 어둡게 만든다. 글자가 흰색이라 대비가 필요하다. */
-    private fun darken(color: Int): Int = Color.rgb(
-        (Color.red(color) * BACKGROUND_TINT).toInt(),
-        (Color.green(color) * BACKGROUND_TINT).toInt(),
-        (Color.blue(color) * BACKGROUND_TINT).toInt()
-    )
 
     private fun onSaveClicked(selectSubway: String, selectDay: String, resultDirection: String) {
         if (resultViewModel.timeTable.value.isNullOrEmpty()) {

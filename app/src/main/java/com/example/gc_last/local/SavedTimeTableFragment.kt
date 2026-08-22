@@ -9,6 +9,8 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.gc_last.R
+import com.example.gc_last.model.StationCatalog
+import com.example.gc_last.ui.LineColors
 import com.example.gc_last.util.NavKeys
 import kotlinx.android.synthetic.main.fragment_saved_time_table.*
 import kotlinx.android.synthetic.main.fragment_saved_time_table.view.*
@@ -69,6 +71,9 @@ class SavedTimeTableFragment : Fragment() {
                 timeTableViewModel.load(selectSubway, selectDay, resultDirection, filter)
             }
         }
+
+        // 어느 노선의 시간표인지 배경색으로 알 수 있게 한다.
+        LineColors.applyBackground(view, StationCatalog.resolve(selectSubway)?.line)
 
         timeTableViewModel.load(selectSubway, selectDay, resultDirection, TimeTableFilter.ALL)
     }

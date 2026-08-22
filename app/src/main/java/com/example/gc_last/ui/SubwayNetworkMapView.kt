@@ -166,7 +166,7 @@ class SubwayNetworkMapView @JvmOverloads constructor(
      * 환승역을 먼저 그린다.
      */
     private fun drawLabels(canvas: Canvas) {
-        namePaint.textSize = dp(9.5f) * zoom.coerceIn(1f, 1.5f)
+        namePaint.textSize = dp(9.5f) * zoom.coerceIn(1f, 2.1f)
         nameShadowPaint.textSize = namePaint.textSize
         nameShadowPaint.strokeWidth = dp(2f)
 
@@ -371,7 +371,13 @@ class SubwayNetworkMapView @JvmOverloads constructor(
 
     private companion object {
         const val MIN_ZOOM = 1f
-        const val MAX_ZOOM = 14f
+        /**
+         * 최대 배율.
+         *
+         * 도심은 역 간격이 200m 도 안 되는 곳이 있어, 배율이 낮으면 이름을 놓을 자리가 없어
+         * 상당수가 생략된다. 충분히 크게 열어 둬야 원하는 역까지 파고들 수 있다.
+         */
+        const val MAX_ZOOM = 60f
 
         /** 이 배율 이상에서만 역 이름을 그린다. 그 아래로는 글자가 겹쳐 읽을 수 없다. */
         const val NAME_VISIBLE_ZOOM = 4.5f
