@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Path
 import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.MotionEvent
@@ -63,6 +64,11 @@ class SubwayNetworkMapView @JvmOverloads constructor(
     private val worldWidth: Float
     private val worldHeight: Float
 
+    /** 투영 기준. 역이 아닌 좌표(시·도 경계)를 같은 좌표계로 옮기는 데 쓴다. */
+    private val originLat: Double
+    private val originLon: Double
+    private val lonScale: Double
+
 
     /** 화면에 꽉 차게 맞추는 배율. 확대 배율 1 이 이 상태다. */
     private var fitScale = 1f
@@ -100,6 +106,9 @@ class SubwayNetworkMapView @JvmOverloads constructor(
         }
         worldWidth = ((maxLon - minLon) * lonScale).toFloat()
         worldHeight = (maxLat - minLat).toFloat()
+        originLat = maxLat
+        originLon = minLon
+        this.lonScale = lonScale
 
         edgesByLine = lines.associateWith { line ->
             val drawable = StationCatalog.of(line).filter { placed.containsKey(it.code) }
@@ -138,6 +147,14 @@ class SubwayNetworkMapView @JvmOverloads constructor(
     private val canvasPaint = Paint().apply {
         color = ContextCompat.getColor(context, R.color.map_canvas)
     }
+
+    /** 시·도 경계. 노선을 가리지 않도록 선만 아주 옅게 그린다. */
+    private val landPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = ContextCompat.getColor(context, R.color.map_land_stroke)
+        style = Paint.Style.STROKE
+    }
+
+    private val provinces: List<List<Pair<Double, Double>>> = Geography.provinces(context)
 
     private val scaleDetector = ScaleGestureDetector(
         context,
@@ -184,6 +201,7 @@ class SubwayNetworkMapView @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), canvasPaint)
+        drawLand(canvas)
         linePaint.strokeWidth = dp(1.6f) * zoom.coerceIn(1f, 2.6f)
 
         // 미지원 노선을 먼저 그려 지원 노선이 위에 오게 한다.
@@ -235,6 +253,26 @@ class SubwayNetworkMapView @JvmOverloads constructor(
             namePaint.alpha = if (station.timeTableSupported) 255 else DIM_ALPHA
             canvas.drawText(station.name, x, y, nameShadowPaint)
             canvas.drawText(station.name, x, y, namePaint)
+        }
+    }
+
+    /**
+     * 시·도 경계를 옅게 깔아 위치를 가늠할 수 있게 한다.
+     *
+     * 배경이므로 색과 굵기를 아주 낮게 둔다. 서울 자치구 경계까지 함께 그리면 도심에서
+     * 선이 겹쳐 노선을 읽기 어려웠다.
+     */
+    private fun drawLand(canvas: Canvas) {
+        landPaint.strokeWidth = dp(0.7f) * zoom.coerceIn(1f, 2f)
+        provinces.forEach { ring ->
+            val path = Path()
+            ring.forEachIndexed { index, (lat, lon) ->
+                val x = ((lon - originLon) * lonScale).toFloat() * fitScale * zoom + offsetX
+                val y = (originLat - lat).toFloat() * fitScale * zoom + offsetY
+                if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
+            }
+            path.close()
+            canvas.drawPath(path, landPaint)
         }
     }
 

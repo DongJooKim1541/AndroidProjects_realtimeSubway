@@ -26,6 +26,9 @@
     <color name="text_on_accent">#FAF4E6</color>
 
     <!-- 노선도 -->
+    <!-- 시·도 경계. 방향만 가늠할 정도로 옅게. -->
+    <color name="map_land_stroke">#DBCDAD</color>
+
     <color name="map_station_label">#241F16</color>
     <color name="map_label_halo">#CCFAF4E6</color>
 
