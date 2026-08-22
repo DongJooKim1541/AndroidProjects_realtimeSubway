@@ -13,6 +13,9 @@ import com.example.gc_last.model.FreshData
 import com.example.gc_last.model.SaveItem
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 /** 검색 결과 화면 ViewModel. 선택한 역의 다가오는 열차 [UPCOMING_LIMIT]편을 보여준다. */
@@ -32,15 +35,37 @@ class ResultViewModel(application: Application) : AndroidViewModel(application) 
         _timeTable.postValue(emptyList())
     }
 
+    /** 조회해 둔 전체 시간표. 남은 시간은 여기서 매초 다시 계산한다. */
+    private var timetable: List<FreshData> = emptyList()
+
+    private var ticker: Job? = null
+
     fun clearErrorMessage() {
         _errorMessage.value = null
     }
 
     fun load(subwayName: String, dayName: String, direction: String) {
         viewModelScope.launch(Dispatchers.IO + errorHandler) {
-            _timeTable.postValue(
-                SubwayRepository.loadTimeTable(subwayName, dayName, direction).upcoming(UPCOMING_LIMIT)
-            )
+            timetable = SubwayRepository.loadTimeTable(subwayName, dayName, direction)
+            _timeTable.postValue(timetable.upcoming(UPCOMING_LIMIT))
+            startTicker()
+        }
+    }
+
+    /**
+     * 남은 시간을 매초 다시 계산해 내보낸다.
+     *
+     * 이전에는 조회 시점에 한 번만 계산해서, 화면을 열어 둔 채로 있으면 "5분 20초 뒤"가
+     * 그대로 멈춰 있었다. 열차가 지나가도 목록에서 사라지지 않았다.
+     * [upcoming]이 이미 지난 편성을 걸러내므로, 다시 계산하면 다음 열차로 자연히 넘어간다.
+     */
+    private fun startTicker() {
+        ticker?.cancel()
+        ticker = viewModelScope.launch(Dispatchers.Default) {
+            while (isActive) {
+                delay(TICK_INTERVAL_MS)
+                _timeTable.postValue(timetable.upcoming(UPCOMING_LIMIT))
+            }
         }
     }
 
@@ -70,5 +95,8 @@ class ResultViewModel(application: Application) : AndroidViewModel(application) 
 
         /** 결과 화면에 노출할 다가오는 열차 편수. */
         private const val UPCOMING_LIMIT = 2
+
+        /** 남은 시간 갱신 주기. 표기가 초 단위라 1초로 둔다. */
+        private const val TICK_INTERVAL_MS = 1_000L
     }
 }

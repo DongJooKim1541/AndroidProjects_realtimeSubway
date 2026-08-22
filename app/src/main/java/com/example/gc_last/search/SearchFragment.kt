@@ -15,17 +15,22 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.gc_last.R
-import com.example.gc_last.model.DayOfWeek
-import com.example.gc_last.model.Subways
+import com.example.gc_last.model.Station
+import com.example.gc_last.model.StationCatalog
 import com.example.gc_last.network.SubwayApi
 import com.example.gc_last.util.NavKeys
 import kotlinx.android.synthetic.main.fragment_search.*
 import kotlinx.android.synthetic.main.fragment_search.view.*
 
-/** 메인 화면. 역/요일/방향을 고르고 결과 화면으로 넘어간다. */
+/**
+ * 메인 화면. 노선도에서 역을 고르고, 요일·방향을 라디오 버튼으로 골라 결과 화면으로 넘어간다.
+ *
+ * 예전에는 역과 요일을 각각 콤보 박스(AlertDialog 목록)로 골랐고 2호선 20개 역만 있었다.
+ * 지금은 전체 노선도를 화면에 두고 그 위에서 고른다.
+ */
 class SearchFragment : Fragment() {
 
-    private var selectedSubway: String? = null
+    private var selectedStation: Station? = null
     private var selectedDay: String? = null
 
     private val searchViewModel by lazy {
@@ -34,30 +39,6 @@ class SearchFragment : Fragment() {
 
     private val searchAdapter by lazy {
         SearchAdapter(onDelete = { saveId -> searchViewModel.delete(saveId) })
-    }
-
-    private val stationDialog by lazy {
-        selectionDialog(
-            titleRes = R.string.select_station_title,
-            labels = Subways.values().map { it.holder }
-        ) { index ->
-            with(Subways.values()[index]) {
-                selectedSubway = name
-                text_type.text = holder
-            }
-        }
-    }
-
-    private val dayDialog by lazy {
-        selectionDialog(
-            titleRes = R.string.select_day_title,
-            labels = DayOfWeek.values().map { it.holder }
-        ) { index ->
-            with(DayOfWeek.values()[index]) {
-                selectedDay = name
-                txt_weekday.text = holder
-            }
-        }
     }
 
     override fun onCreateView(
@@ -69,12 +50,11 @@ class SearchFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        layout_type.setOnClickListener { stationDialog.show() }
-        layout_date.setOnClickListener { dayDialog.show() }
+        setUpMap(view)
+        setUpDayRadio(view)
 
         view.list_search.adapter = searchAdapter
         view.list_search.layoutManager = LinearLayoutManager(requireContext())
-
         searchViewModel.savedItems.observe(viewLifecycleOwner) { searchAdapter.submitList(it) }
 
         view.btn_search.setOnClickListener { onSearchClicked(view) }
@@ -90,11 +70,56 @@ class SearchFragment : Fragment() {
         updateSearchButtonState()
     }
 
+    private fun setUpMap(view: View) {
+        val map = view.map_network
+
+        view.btn_zoom_in.setOnClickListener { map.zoomIn() }
+        view.btn_zoom_out.setOnClickListener { map.zoomOut() }
+
+        map.onStationClick = { station ->
+            if (station.timeTableSupported) {
+                selectedStation = station
+                map.selected = station
+                // 고른 역이 가운데 오도록 확대해 준다. 축소 상태에서는 이름이 안 보인다.
+                map.focusOn(station)
+                val transfers = StationCatalog.transfersOf(station)
+                text_type.text = if (transfers.isEmpty()) {
+                    getString(R.string.selected_station, station.line.label, station.name)
+                } else {
+                    getString(
+                        R.string.selected_station_with_transfer,
+                        station.line.label,
+                        station.name,
+                        transfers.joinToString(", ") { it.label }
+                    )
+                }
+            } else {
+                // 노선도에는 그리되, 시간표 API가 데이터를 주지 않는 노선임을 알린다.
+                Toast.makeText(
+                    requireContext(),
+                    getString(R.string.timetable_unsupported_line, station.line.label),
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+            updateSearchButtonState()
+        }
+
+    }
+
+    private fun setUpDayRadio(view: View) {
+        view.radio_day.setOnCheckedChangeListener { group, checkedId ->
+            val tag = group.findViewById<RadioButton>(checkedId)?.tag?.toString() ?: return@setOnCheckedChangeListener
+            selectedDay = tag
+            txt_weekday.text = getString(R.string.selected_day, tag)
+            updateSearchButtonState()
+        }
+    }
+
     private fun onSearchClicked(view: View) {
-        val subway = selectedSubway
+        val station = selectedStation
         val day = selectedDay
 
-        if (subway == null || day == null) {
+        if (station == null || day == null) {
             Toast.makeText(requireContext(), R.string.search_input_required, Toast.LENGTH_LONG).show()
             return
         }
@@ -102,15 +127,12 @@ class SearchFragment : Fragment() {
         findNavController().navigate(
             R.id.action_searchFragment_to_resultFragment,
             Bundle().apply {
-                putString(NavKeys.SELECT_SUBWAY, subway)
+                // 역 코드를 넘긴다. 예전에는 Subways 상수 이름을 넘겼고 2호선만 가능했다.
+                putString(NavKeys.SELECT_SUBWAY, station.code)
                 putString(NavKeys.SELECT_DAY, day)
                 putString(NavKeys.RESULT_DIRECTION, view.selectedDirection())
             }
         )
-
-        selectedSubway = null
-        selectedDay = null
-        updateSearchButtonState()
     }
 
     /** 아무것도 선택되지 않았으면 상행으로 본다. 이전에는 이 경우 NPE가 났다. */
@@ -119,19 +141,6 @@ class SearchFragment : Fragment() {
         if (checkedId == View.NO_ID) return SubwayApi.DIRECTION_UP
         return findViewById<RadioButton>(checkedId)?.tag?.toString() ?: SubwayApi.DIRECTION_UP
     }
-
-    private fun selectionDialog(
-        titleRes: Int,
-        labels: List<String>,
-        onSelected: (index: Int) -> Unit
-    ): AlertDialog = AlertDialog.Builder(requireContext())
-        .setTitle(titleRes)
-        .setItems(labels.toTypedArray()) { _, index ->
-            onSelected(index)
-            updateSearchButtonState()
-        }
-        .setNegativeButton(R.string.cancel, null)
-        .create()
 
     private fun showExitDialog() {
         AlertDialog.Builder(
@@ -148,7 +157,7 @@ class SearchFragment : Fragment() {
      * 검색 후 선택이 초기화되어도 버튼이 계속 초록색으로 남았다.
      */
     private fun updateSearchButtonState() {
-        val ready = selectedSubway != null && selectedDay != null
+        val ready = selectedStation != null && selectedDay != null
         val background = if (ready) android.R.color.holo_green_dark else android.R.color.darker_gray
         val text = if (ready) android.R.color.white else android.R.color.black
 

@@ -1,106 +1,138 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  역은 노선도에서 직접 고르고, 요일과 방향은 그 아래 라디오 버튼으로 고른다.
+  예전에는 역/요일을 각각 콤보 박스(AlertDialog 목록)로 골랐는데, 역이 노선 어디에
+  있는지 알 수 없었고 화면을 여러 번 열어야 했다.
+-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#413752"
     android:orientation="vertical">
 
     <TextView
+        android:id="@+id/text_type"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="12dp"
+        android:text="지하철역을 선택하세요. (두 손가락으로 확대, 끌어서 이동)"
+        android:textColor="@android:color/white"
+        android:textSize="17sp" />
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/layout_type"
+    <!-- 노선도는 스스로 확대·이동을 처리한다. 스크롤 뷰로 감싸면 두 손가락 확대를
+         스크롤 뷰가 가로채 버린다. 확대·축소 버튼은 지도 위에 겹쳐 둔다. -->
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="46dp"
-        android:layout_marginStart="16dp"
+        android:layout_height="0dp"
         android:layout_marginTop="4dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginBottom="4dp"
-        android:background="@drawable/bg_border_rounded"
-        android:backgroundTint="@color/cardview_light_background"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/text_type"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.498">
+        android:layout_weight="1">
 
-        <TextView
-            android:id="@+id/text_type"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginEnd="8dp"
-            android:layout_marginBottom="8dp"
-            android:text='지하철역을 선택하세요.'
-            android:textSize="18sp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/img_type_Deco"
-            app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+        <com.example.gc_last.ui.SubwayNetworkMapView
+            android:id="@+id/map_network"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
 
-        <ImageView
-            android:id="@+id/img_type_Deco"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/ic_sort_down" />
-    </androidx.constraintlayout.widget.ConstraintLayout>
+            android:layout_gravity="end|bottom"
+            android:layout_marginEnd="10dp"
+            android:layout_marginBottom="10dp"
+            android:orientation="vertical">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/layout_date"
+            <Button
+                android:id="@+id/btn_zoom_in"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_border_rounded"
+                android:backgroundTint="#DDFFFFFF"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:padding="0dp"
+                android:text="+"
+                android:textColor="#222222"
+                android:textSize="20sp" />
+
+            <Button
+                android:id="@+id/btn_zoom_out"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginTop="6dp"
+                android:background="@drawable/bg_border_rounded"
+                android:backgroundTint="#DDFFFFFF"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:padding="0dp"
+                android:text="−"
+                android:textColor="#222222"
+                android:textSize="20sp" />
+        </LinearLayout>
+    </FrameLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/list_search"
         android:layout_width="match_parent"
-        android:layout_height="46dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="4dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginBottom="4dp"
-        android:background="@drawable/bg_border_rounded"
-        android:backgroundTint="@android:color/background_light"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/img_date_deco"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.498">
+        android:layout_height="96dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp" />
 
-        <TextView
-            android:id="@+id/txt_weekday"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginEnd="8dp"
-            android:layout_marginBottom="8dp"
-            android:text='날짜를 선택하세요.'
-            android:textSize="18sp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/img_date_deco"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+    <TextView
+        android:id="@+id/txt_weekday"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="6dp"
+        android:text="날짜를 선택하세요."
+        android:textColor="@android:color/white"
+        android:textSize="14sp" />
 
-        <ImageView
-            android:id="@+id/img_date_deco"
+    <RadioGroup
+        android:id="@+id/radio_day"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <RadioButton
+            android:id="@+id/radio_weekday"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/ic_sort_down" />
-    </androidx.constraintlayout.widget.ConstraintLayout>
+            android:layout_weight="1"
+            android:buttonTint="@color/cardview_light_background"
+            android:tag="평일"
+            android:text="평일"
+            android:textColor="@color/cardview_light_background"
+            android:textSize="16sp" />
+
+        <RadioButton
+            android:id="@+id/radio_saturday"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:buttonTint="@color/cardview_light_background"
+            android:tag="토요일"
+            android:text="토요일"
+            android:textColor="@color/cardview_light_background"
+            android:textSize="16sp" />
+
+        <RadioButton
+            android:id="@+id/radio_sunday"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:buttonTint="@color/cardview_light_background"
+            android:tag="일요일"
+            android:text="일요일"
+            android:textColor="@color/cardview_light_background"
+            android:textSize="16sp" />
+    </RadioGroup>
 
     <RadioGroup
         android:id="@+id/radio_layout"
-        android:layout_width="341dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_marginTop="10dp"
         android:checkedButton="@id/radioButton"
         android:gravity="center"
         android:orientation="horizontal">
@@ -114,7 +146,7 @@
             android:tag="1"
             android:text="상행"
             android:textColor="@color/cardview_light_background"
-            android:textSize="18sp" />
+            android:textSize="16sp" />
 
         <RadioButton
             android:id="@+id/radioButton2"
@@ -125,22 +157,15 @@
             android:tag="2"
             android:text="하행"
             android:textColor="@color/cardview_light_background"
-            android:textSize="18sp" />
+            android:textSize="16sp" />
     </RadioGroup>
 
     <Button
         android:id="@+id/btn_search"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="4dp"
         android:text="검색"
         android:textAppearance="@style/TextAppearance.AppCompat.Large" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/list_search"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_margin="8dp"
-        android:layout_marginTop="10dp"
-        android:layout_weight="1"></androidx.recyclerview.widget.RecyclerView>
 </LinearLayout>

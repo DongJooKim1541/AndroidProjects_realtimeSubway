@@ -13,7 +13,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.gc_last.R
 import com.example.gc_last.model.FreshData
-import com.example.gc_last.model.Subways
+import com.example.gc_last.model.StationCatalog
 import com.example.gc_last.ui.FreshAdapter
 import com.example.gc_last.ui.FreshPagedAdapter
 import com.example.gc_last.util.NavKeys
@@ -69,7 +69,7 @@ class SaveFragment : Fragment() {
         val subway = condition.selectSubway ?: return
         val day = condition.selectDay ?: return
         val direction = condition.resultDirection ?: return
-        val stationName = Subways.valueOf(subway).holder
+        val stationName = StationCatalog.resolve(subway)?.name.orEmpty()
 
         txt_subway_subwayStation.text = condition.station_name
 

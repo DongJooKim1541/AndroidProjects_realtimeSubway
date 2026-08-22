@@ -23,4 +23,8 @@
 
     <!-- 저장소 화면 -->
     <string name="no_saved_condition">해당되는 데이터가 없습니다!</string>
+    <string name="selected_station">%1$s %2$s</string>
+    <string name="selected_station_with_transfer">%1$s %2$s · 환승 %3$s</string>
+    <string name="selected_day">%1$s 시간표</string>
+    <string name="timetable_unsupported_line">%1$s은 시간표를 제공하지 않습니다.</string>
 </resources>

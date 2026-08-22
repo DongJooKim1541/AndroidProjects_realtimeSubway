@@ -10,6 +10,9 @@ import com.example.gc_last.data.upcoming
 import com.example.gc_last.model.FreshData
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 /** 시간표 화면에서 고를 수 있는 조회 범위. */
@@ -50,14 +53,38 @@ class SavedTimeTableViewModel : ViewModel() {
         _timeTable.postValue(emptyList())
     }
 
+    /** 조회해 둔 전체 시간표. "곧 도착"은 여기서 매초 다시 계산한다. */
+    private var timetable: List<FreshData> = emptyList()
+
+    private var ticker: Job? = null
+
     fun clearErrorMessage() {
         _errorMessage.value = null
     }
 
     fun load(subwayName: String, dayName: String, direction: String, filter: TimeTableFilter) {
         viewModelScope.launch(Dispatchers.IO + errorHandler) {
-            val all = SubwayRepository.loadTimeTable(subwayName, dayName, direction)
-            _timeTable.postValue(all.applyFilter(filter))
+            timetable = SubwayRepository.loadTimeTable(subwayName, dayName, direction)
+            _timeTable.postValue(timetable.applyFilter(filter))
+            restartTicker(filter)
+        }
+    }
+
+    /**
+     * "곧 도착"만 매초 다시 계산한다.
+     *
+     * 전체/첫차/막차는 시간표 그대로라 값이 바뀌지 않으므로, 갱신하면 239행 목록을
+     * 1초마다 헛되이 다시 그리게 된다.
+     */
+    private fun restartTicker(filter: TimeTableFilter) {
+        ticker?.cancel()
+        if (filter != TimeTableFilter.UPCOMING) return
+
+        ticker = viewModelScope.launch(Dispatchers.Default) {
+            while (isActive) {
+                delay(TICK_INTERVAL_MS)
+                _timeTable.postValue(timetable.applyFilter(TimeTableFilter.UPCOMING))
+            }
         }
     }
 
@@ -74,5 +101,8 @@ class SavedTimeTableViewModel : ViewModel() {
 
         /** "곧 도착"은 가장 가까운 1편만 보여준다. */
         private const val UPCOMING_LIMIT = 1
+
+        /** 남은 시간 갱신 주기. */
+        private const val TICK_INTERVAL_MS = 1_000L
     }
 }
