@@ -16,7 +16,7 @@
 | 빌드 | AGP 7.4.2 / Gradle 7.6.4 / JDK 17 |
 | 아키텍처 | MVVM (ViewModel + LiveData) |
 | 화면 구성 | 단일 Activity + 5개 Fragment (Navigation Component) |
-| 지원 노선 | 2호선 20개 역 |
+| 지원 노선 | 노선도 799역(24노선), 시간표 조회는 1~9호선 |
 
 ---
 
@@ -76,16 +76,21 @@ ViewModel은 모두 **Fragment 스코프**(`ViewModelProvider(this)`)다.
 | `arrivetime` | String | 도착 시각 `HH:mm:ss` |
 | `subway_end_name` | String | 종착역 |
 | `timeDistance` | String | 남은 시간 표기 (예: "3분 20초") |
-| `selectSubway` | String? | 조회 조건 — `Subways` 상수 이름 |
+| `selectSubway` | String? | 조회 조건 — 역 코드(`0222`). 이전 버전은 `Subways` 상수 이름을 저장했다 |
 | `selectDay` | String? | 조회 조건 — `DayOfWeek` 상수 이름 |
 | `resultDirection` | String? | 조회 조건 — "1"(상행) / 그 외(하행) |
 
 ### 3.2 열거형
 
-**`Subways`** — 2호선 20개 역. `holder`는 표시 이름, `scode`는 API 역 코드.
 **`DayOfWeek`** — 평일(1) / 토요일(2) / 일요일(3).
 
-> ⚠️ 두 열거형의 **상수 이름이 DB와 Bundle에 그대로 저장**된다.
+**`SubwayLine`** — 노선과 노선색, 시간표 지원 여부. 역 목록은 [`StationCatalog`](#75-노선도와-역-목록-2026-08-22-추가).
+
+**`Subways`** — 예전 2호선 20개 역 열거형. 지금은 쓰지 않지만,
+Room 과 Bundle 에 `Subway9` 같은 값이 남아 있어 `StationCatalog.resolve` 가 그 키를
+읽는 데만 쓴다.
+
+> ⚠️ `DayOfWeek` 와 `Subways` 의 **상수 이름이 DB와 Bundle에 그대로 저장**된다.
 > 이름 변경이나 순서 변경은 기존 저장 데이터를 읽지 못하게 만든다.
 
 ### 3.3 DAO
@@ -109,12 +114,13 @@ suspend fun deleteSaveData(saveId: Long)
 ### 4.1 요청
 
 ```
-http://openapi.seoul.go.kr:8088/{KEY}/xml/SearchSTNTimeTableByIDService/1/250/{0+역코드}/{요일}/{방향}
+http://openapi.seoul.go.kr:8088/{KEY}/xml/SearchSTNTimeTableByIDService/1/250/{역코드}/{요일}/{방향}
 ```
 
 - `KEY`는 `local.properties`(`SEOUL_OPENAPI_KEY`) 또는 동명의 환경변수에서 읽어
   `BuildConfig.SEOUL_OPENAPI_KEY`로 주입된다. 소스에는 없다.
-- 역 코드 앞의 `0`은 호선 접두사이며 현재 2호선만 지원한다.
+- 역 코드는 호선 접두사를 포함한 완전한 값이다(강남 `0222`). 예전에는 2호선만 다루어
+  세 자리 코드에 `0` 을 붙였다.
 - 조회 범위 `1~250`은 하루 운행 편성을 모두 담기 위한 상한이다.
 
 ### 4.2 응답 파싱
@@ -258,7 +264,7 @@ SDK 버전마다 달라(`onScroll` 의 `e1` 이 API 34 에서 nullable) 오버�
 
 | 항목 | 내용 |
 |------|------|
-| 노선 | 2호선 20개 역만 지원 (`Subways` 하드코딩) |
+| 시간표 | 1~9호선만. 나머지 노선은 API 가 데이터를 주지 않는다 |
 | 자정 경계 | 날짜 없이 시각만 비교하므로 막차 이후 편성은 제외됨 |
 | 통신 | API가 HTTPS를 제공하지 않아 평문 HTTP + `usesCleartextTraffic` 사용 |
 | Paging | Paging 2 (`PagedListAdapter`) 사용, Paging 3 미적용 |

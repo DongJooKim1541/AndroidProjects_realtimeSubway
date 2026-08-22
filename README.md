@@ -55,9 +55,15 @@
 app/src/main/java/com/example/gc_last/
 ├── data/        SubwayRepository — API 조회 및 XML 파싱 단일 진입점
 ├── database/    DatabaseModule — Room 데이터베이스
-├── model/       FreshData, SaveItem, FreshDao, Subways, DayOfWeek
+├── model/       FreshData, SaveItem, FreshDao, DayOfWeek
+│                StationCatalog — 799역 목록·좌표·환승(정적 표), Station, SubwayLine
+│                Subways — 이전 버전이 저장한 키를 읽기 위한 별칭
 ├── network/     SubwayApi — 서울 열린데이터광장 URL 생성
 ├── ui/          FreshAdapter, FreshPagedAdapter — 공용 목록 어댑터
+│                SubwayNetworkMapView — 노선도(확대·이동·역 선택)
+│                LineTopology — 어떤 역끼리 이을지 좌표에서 계산
+│                Geography — 배경에 깔 시·도 경계
+│                LineColors — 화면을 노선색으로 칠하는 공통 처리
 ├── util/        TimeRemaining(남은 시간 계산), NavKeys(화면 간 Bundle 키)
 ├── main/        MainActivity, SplashFragment
 ├── search/      SearchFragment/ViewModel/Adapter — 검색 및 저장 목록
